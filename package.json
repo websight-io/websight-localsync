@@ -1,12 +1,12 @@
 {
-  "name": "@DS-WebSight/websight-sync",
+  "name": "@DS-WebSight/websight-localsync",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "scripts": {},
   "author": "",
   "license": "ISC",
-  "repository": "git://github.com/DS-WebSight/websight-sync.git",
+  "repository": "git://github.com/DS-WebSight/websight-localsync.git",
   "bin": "./src/index.js",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
