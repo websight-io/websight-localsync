@@ -1,16 +1,15 @@
 const qs = require('qs');
-const fs = require('fs');
 const axios = require('axios');
 const { sendRequest, toFormData } = require('./sendRequest.js');
 
 async function setupMappings() {
-    const result1 = await sendRequest(
+    let result = await sendRequest(
         'post',
         'http://localhost:8080/system/console/configMgr/org.apache.sling.jcr.resource.internal.JcrResourceResolverFactoryImpl'
     );
 
-    if (result1.status === 200) {
-        const props = Object.fromEntries(Object.entries(result1.data.properties).map(([key, value]) => ([key, value.value || value.values])));
+    if (result.status === 200) {
+        const props = Object.fromEntries(Object.entries(result.data.properties).map(([key, value]) => ([key, value.value || value.values])));
         if (props['resource.resolver.mapping'].includes('/dev/apps/:/apps/')) {
             console.log('Mapping already configured');
             return;
@@ -18,7 +17,7 @@ async function setupMappings() {
         props['resource.resolver.mapping'].push('/dev/apps/:/apps/');
         props['resource.resolver.mapping'].push('/apps/:/apps/');
 
-        const result2 = await sendRequest(
+        result = await sendRequest(
             'post',
             'http://localhost:8080/system/console/configMgr/org.apache.sling.jcr.resource.internal.JcrResourceResolverFactoryImpl',
             qs.stringify({
@@ -30,7 +29,7 @@ async function setupMappings() {
             }, { arrayFormat: 'repeat' })
         );
 
-        if (result2.status === 302) {
+        if (result.status === 302) {
             console.log('Added mapping');
         }
     }
