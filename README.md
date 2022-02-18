@@ -6,20 +6,15 @@ Tool to seamlessly synchronize local code changes with WebSight instance.
 - node v.12 or later
 
 ## How to use
-This package is deployed as to Github Package Registry. In order to use it:
-1. Add `.npmrc` file in your project root with following content:
-```
-@DS-WebSight:registry=https://npm.pkg.github.com
-```
-2. Install package as a dev dependency `npm install -D @DS-WebSight/websight-localsync`
-3. Add `watch` script entry in `package.json` e.g.:
+1. Install package as a dev dependency `npm install -D websight-localsync`
+2. Add `watch` script entry in `package.json` e.g.:
 ```
 "scripts": {
     ...
     "watch": "babel src/main/webapp/ --config-file ./babel/.babelrc.js --extensions \".js,.jsx,.ts,.tsx\" -d target/dist --copy-files --watch"
 }
 ```
-4. Run script either using `npx websight-localsync` or configure it as a `script` entry in `package.json`:
+3. Run script either using `npx websight-localsync` or configure it as a `script` entry in `package.json`:
 ```
 "scripts": {
     ...
@@ -29,6 +24,7 @@ This package is deployed as to Github Package Registry. In order to use it:
 
 ## How to publish
 To publish a new package version modify `version` in `package.json` and run `npm publish`.
+You need to be logged in to company's npm account. To log in use `npm login`. Reach @Michał Cukierman for credentials.
 
 ## How it works
 When running, it will add `target/dist` as FileSystem resource (using FsResourceProvider) to WebSight under `/dev/{PROJECT_NAME}` path. 
