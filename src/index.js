@@ -5,7 +5,8 @@ const qs = require('qs');
 
 const projectDir = process.cwd();
 const projectName = projectDir.split('/').pop();
-const distDir = `${projectDir}/target/dist/apps/${projectName}`;
+let distDir = `${projectDir}/target/dist/apps/${projectName}`;
+let providerRootSuffix = projectName;
 const { setup } = require('./setup.js');
 const { sendRequest, toFormData } = require('./sendRequest.js');
 
@@ -21,7 +22,7 @@ async function startFsSync() {
             action: 'ajaxConfigManager',
             '$location': '',
             'provider.file': distDir,
-            'provider.root': `/dev/apps/${projectName}`,
+            'provider.root': `/dev/apps/${providerRootSuffix}`,
             'provider.fs.mode': 'FILES_FOLDERS',
             'provider.initial.content.import.options': '',
             'provider.filevault.filterxml.path': '',
@@ -56,6 +57,22 @@ function startWatch() {
     watch.stderr.pipe(process.stderr);
 }
 
+function handleArguments() {
+    process.argv.forEach((val) => {
+        if(val.startsWith('target-folder')) {
+            const targetFolderFromArgs = val.split('=')[1];
+            if (targetFolderFromArgs != null) {
+                distDir = `${projectDir}/${targetFolderFromArgs}`;
+            }
+        }
+        if(val.startsWith('provider-root-suffix')) {
+            const suffixFromArgs = val.split('=')[1];
+            if (suffixFromArgs != null) {
+                providerRootSuffix = suffixFromArgs;
+            }
+        }
+    });
+}
 
 async function main() {
     let handlingExit = false;
@@ -71,6 +88,8 @@ async function main() {
 
     console.log('=== Setting up the the server... ===');
     await setup();
+
+    handleArguments();
 
     console.log('=== Starting sync with WS instance... ===');
     await startFsSync();
