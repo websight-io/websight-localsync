@@ -5,14 +5,16 @@ const qs = require('qs');
 
 const projectDir = process.cwd();
 const projectName = projectDir.split('/').pop();
-let distDir = `${projectDir}/target/dist/apps/${projectName}`;
-let providerRootSuffix = projectName;
+const defaultDistDir = `${projectDir}/target/dist/apps/${projectName}`;
+const defaultProviderRootSuffix = projectName;
 const { setup } = require('./setup.js');
 const { sendRequest, toFormData } = require('./sendRequest.js');
 
 let id = '';
 
 async function startFsSync() {
+    const { distDir, providerRootSuffix } = handleArguments();
+
     const result = await sendRequest(
         'post',
         'http://localhost:8080/system/console/configMgr/[Temporary%20PID%20replaced%20by%20real%20PID%20upon%20save]',
@@ -58,6 +60,8 @@ function startWatch() {
 }
 
 function handleArguments() {
+    let distDir = defaultDistDir;
+    let providerRootSuffix = defaultProviderRootSuffix;
     process.argv.forEach((val) => {
         if(val.startsWith('target-folder')) {
             const targetFolderFromArgs = val.split('=')[1];
@@ -72,9 +76,39 @@ function handleArguments() {
             }
         }
     });
+    return { distDir, providerRootSuffix };
+}
+
+function isHelpRequested() {
+    return process.argv.includes('--help');
+}
+
+function logHelpMessage() {
+    console.log("Usage: run \"npx websight-localsync [option...]\" or configure it as a script entry in package.json:");
+    console.log(`
+    "scripts": {
+        ...
+        "sync": "websight-localsync [option...]"
+    }
+    `);
+    console.log("Options:")
+    console.log("   target-folder: folder where the resources that we want to sync can be found. Default: target/dist/apps/ + the name of the project");
+    console.log("   provider-root-suffix: the path under /dev/apps/ where the synced resources will be copied. Default: the name of the project\n");
+    console.log("Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.");
+    console.log("   Run \"npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources\" or configure it as a script entry in package.json:");
+    console.log(`
+    "scripts": {
+        ...
+        "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
+    }`);
 }
 
 async function main() {
+    if (isHelpRequested()) {
+        logHelpMessage();
+        return;
+    }
+
     let handlingExit = false;
     ['SIGINT'].forEach(event => {
         process.on(event, () => {

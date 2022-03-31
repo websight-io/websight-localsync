@@ -32,6 +32,7 @@ Example: our resources can be found under `dist` folder and inside the JCR repos
     "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
 }
 ```
+You can use `npx websight-localsync --help` to get help about the usage.
 
 ## How to publish
 To publish a new package version modify `version` in `package.json` and run `npm publish`.
