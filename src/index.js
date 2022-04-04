@@ -5,7 +5,9 @@ const qs = require('qs');
 
 const projectDir = process.cwd();
 const projectName = projectDir.split('/').pop();
-const defaultDistDir = `${projectDir}/target/dist/apps/${projectName}`;
+const defaultDistDirPrefix = 'target/dist/apps';
+const defaultDistDir = `${projectDir}/${defaultDistDirPrefix}/${projectName}`;
+const providerRootPrefix = '/dev/apps/';
 const defaultProviderRootSuffix = projectName;
 const { setup } = require('./setup.js');
 const { sendRequest, toFormData } = require('./sendRequest.js');
@@ -24,7 +26,7 @@ async function startFsSync() {
             action: 'ajaxConfigManager',
             '$location': '',
             'provider.file': distDir,
-            'provider.root': `/dev/apps/${providerRootSuffix}`,
+            'provider.root': `${providerRootPrefix}${providerRootSuffix}`,
             'provider.fs.mode': 'FILES_FOLDERS',
             'provider.initial.content.import.options': '',
             'provider.filevault.filterxml.path': '',
@@ -92,8 +94,8 @@ function logHelpMessage() {
     }
     `);
     console.log("Options:")
-    console.log("   target-folder: folder where the resources that we want to sync can be found. Default: target/dist/apps/ + the name of the project");
-    console.log("   provider-root-suffix: the path under /dev/apps/ where the synced resources will be copied. Default: the name of the project\n");
+    console.log(`   target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project`);
+    console.log(`   provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project\n`);
     console.log("Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.");
     console.log("   Run \"npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources\" or configure it as a script entry in package.json:");
     console.log(`

@@ -21,18 +21,7 @@ Tool to seamlessly synchronize local code changes with WebSight instance.
     "sync": "websight-localsync"
 }
 ```
-4. (Optional) There are possible scenarios where the default options do not meet our need. There are several parameters to modify the default behavior:
-- target-folder: folder where the resources that we want to sync can be found. Default: `target/dist/apps/<projectName>`
-- provider-root-suffix: the path under `/dev/apps/` where the synced resources will be copied. Default: `<projectName>`
-
-Example: our resources can be found under `dist` folder and inside the JCR repository we want to see them under `/dev/apps/my-site/web_resources`:
-```
-"scripts": {
-    ...
-    "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
-}
-```
-You can use `npx websight-localsync --help` to get help about the usage.
+There are possible scenarios where the default options do not meet our need. There are several parameters to modify the default behavior. You can use `npx websight-localsync --help` to get help about the usage.
 
 ## How to publish
 To publish a new package version modify `version` in `package.json` and run `npm publish`.
