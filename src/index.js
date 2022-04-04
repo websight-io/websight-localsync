@@ -86,19 +86,21 @@ function isHelpRequested() {
 }
 
 function logHelpMessage() {
-    console.log("Usage: run \"npx websight-localsync [option...]\" or configure it as a script entry in package.json:");
     console.log(`
+Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
+    
     "scripts": {
         ...
         "sync": "websight-localsync [option...]"
     }
-    `);
-    console.log("Options:")
-    console.log(`   target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project`);
-    console.log(`   provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project\n`);
-    console.log("Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.");
-    console.log("   Run \"npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources\" or configure it as a script entry in package.json:");
-    console.log(`
+    
+Options:
+    target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project
+    provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project
+    
+Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.
+    Run "npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources" or configure it as a script entry in package.json:
+    
     "scripts": {
         ...
         "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
