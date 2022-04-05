@@ -21,6 +21,7 @@ Tool to seamlessly synchronize local code changes with WebSight instance.
     "sync": "websight-localsync"
 }
 ```
+There are possible scenarios where the default options do not meet our need. There are several parameters to modify the default behavior. You can use `npx websight-localsync --help` to get help about the usage.
 
 ## How to publish
 To publish a new package version modify `version` in `package.json` and run `npm publish`.
