@@ -25,7 +25,7 @@ Configure the module that you are actively working on e.g. `websight-pages/websi
 - **[Docker only]** (more details [here](https://bitbucket.org/teamds-workspace/websight-starter/src/main/))
   - bind your `projects` root folder into Docker containers (`Docker Desktop` -> `Preferences` -> `File Sharing` -> add the new entry)
     ![Docker Desktop: file sharing](./docs/images/docker-file-sharing.png)
-  - configure an additional volume pointing your `projects` root folder using the local driver in the `Starter` project (`websight-starter/docker/websight-tar.yaml`) by adding:
+  - configure an additional volume pointing your `projects` root folder using the local driver in the `Starter` project (`websight-starter/local-env/websight-stack.yaml`) by adding:
     ```yaml
     volumes:
       ...
