@@ -16,8 +16,8 @@ async function sendRequest(method, url, formData, headers) {
                 ...headers
             },
             auth: {
-                username: 'admin',
-                password: 'admin'
+                username: 'wsadmin',
+                password: 'wsadmin'
             },
             validateStatus: (status) => status >= 200 && status <= 302,
             maxRedirects: 0
