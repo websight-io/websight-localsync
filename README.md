@@ -7,14 +7,35 @@ or [Docker container](https://bitbucket.org/teamds-workspace/websight-starter/sr
 
 - Node 16.x (the active LTS)
 
-## How to use
+### How to build
+Run commands
+```bash
+npm install
+```
+to build the app.
 
+## How to use
 Configure the module that you are actively working on e.g. `websight-pages/websight-pages-space-view`:
 
-- install the [released package](https://www.npmjs.com/package/websight-localsync) as dev dependency:
-  ```bash
-  npm install -D websight-localsync@1.1.0
-  ```
+- install `websight-localsync` as module dev dependency:
+  - use the latest [released version](https://www.npmjs.com/package/websight-localsync):
+    ```bash
+    rm -rf node_modules
+    npm install websight-localsync@1.1.0
+    ```
+  - install the development version with:
+    ```bash
+    rm -rf node_modules
+    npm install <PATH_TO_LOCAL_DIRECTORY>
+    ```
+    and verify your `package.json`:
+    ```json
+    {
+      "devDependencies": {
+        "websight-localsync": "file:../../websight-localsync"
+      }
+    }
+    ```
 - add `watch` script entry in `package.json` e.g.:
   ```yaml
   "scripts": {
@@ -55,10 +76,10 @@ Configure the module that you are actively working on e.g. `websight-pages/websi
   ```
 - verify in a separate console that the bundle is working correctly with the command:
   ```bash
-  curl -v -X POST -u admin:admin http://localhost:8080/system/console/bundles/org.apache.sling.fsresource
+  curl -v -X POST -u wsadmin:wsadmin http://localhost:8080/system/console/bundles/org.apache.sling.fsresource
   ```
   expected status code is `200`, others:
-  - `301` authentication failed, check your `admin` credentials
+  - `301` authentication failed, check your `wsadmin` credentials
   - `404` the bundle is missing
 
 ## How it works
