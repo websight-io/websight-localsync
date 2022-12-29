@@ -1,40 +1,18 @@
 ## Description
 
-Tool to seamlessly synchronize local code changes with your WebSight instance (running as [a Java application](https://bitbucket.org/teamds-workspace/websight-starter/src/main/RUNNING.md) 
-or [Docker container](https://bitbucket.org/teamds-workspace/websight-starter/src/main/)). 
+A tool to seamlessly synchronize local code changes with your WebSight instance.
 
 ## Requirements
 
 - Node 16.x (the active LTS)
 
-### How to build
-Run commands
-```bash
-npm install
-```
-to build the app.
-
 ## How to use
-Configure the module that you are actively working on e.g. `websight-pages/websight-pages-space-view`:
+Configure the project you are actively working on:
 
 - install `websight-localsync` as module dev dependency:
   - use the latest [released version](https://www.npmjs.com/package/websight-localsync):
     ```bash
-    rm -rf node_modules
-    npm install websight-localsync@1.1.0
-    ```
-  - install the development version with:
-    ```bash
-    rm -rf node_modules
-    npm install <PATH_TO_LOCAL_DIRECTORY>
-    ```
-    and verify your `package.json`:
-    ```json
-    {
-      "devDependencies": {
-        "websight-localsync": "file:../../websight-localsync"
-      }
-    }
+    npm install websight-localsync --save-dev
     ```
 - add `watch` script entry in `package.json` e.g.:
   ```yaml
@@ -43,10 +21,21 @@ Configure the module that you are actively working on e.g. `websight-pages/websi
     "watch": "babel src/main/webapp/ --config-file ./babel/.babelrc.js --extensions \".js,.jsx,.ts,.tsx\" -d target/dist --copy-files --watch"
   }
   ```
-- **[Docker only]** (more details [here](https://bitbucket.org/teamds-workspace/websight-starter/src/main/))
-  - bind your `projects` root folder into Docker containers (`Docker Desktop` -> `Preferences` -> `File Sharing` -> add the new entry)
-    ![Docker Desktop: file sharing](./docs/images/docker-file-sharing.png)
-  - configure an additional volume pointing your `projects` root folder using the local driver in the `Starter` project (`websight-starter/local-env/websight-stack.yaml`) by adding:
+- run script either using `npx websight-localsync [option...]` or configure it as a `script` entry in `package.json`:
+  ```yaml
+  "scripts": {
+    ...
+    "sync": "websight-localsync [option...]"
+  }
+  ```
+  - Options:
+    - **target-folder**: folder where the resources that we want to sync can be found. *Default*: `${defaultDistDirPrefix}/ + the name of the project`
+    - **provider-root-suffix**: the path under ${providerRootPrefix} where the synced resources will be copied. *Default*: `the name of the project`
+  - Example: `websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources`
+  
+### Using with docker
+The tool is working with filesystem so we need to make sure the files of the project you're working on are available inside of the Docker container.
+  - configure an additional volume pointing your `projects` root folder using the local driver by adding:
     ```yaml
     volumes:
       ...
@@ -54,10 +43,9 @@ Configure the module that you are actively working on e.g. `websight-pages/websi
         driver: local
         driver_opts:
           o: bind
-          device: /Users/tomaszmichalak/Projects/websight/projects
+          device: ${PWD}/../../../
           type: none
     ```
-    (please replace that the `driver` option value with your one (the same you configured in `File Sharing` declaration))
   - point the new volume in the ICE container
     ```yaml
     services:
@@ -65,22 +53,9 @@ Configure the module that you are actively working on e.g. `websight-pages/websi
         ...
         volumes:
           ...
-          - localsync:/Users/tomaszmichalak/Projects/websight/projects:ro 
+          - localsync:${PWD}/../../../:ro 
     ```
-- run script either using `npx websight-localsync` or configure it as a `script` entry in `package.json`:
-  ```yaml
-  "scripts": {
-    ...
-    "sync": "websight-localsync"
-  }
-  ```
-- verify in a separate console that the bundle is working correctly with the command:
-  ```bash
-  curl -v -X POST -u wsadmin:wsadmin http://localhost:8080/system/console/bundles/org.apache.sling.fsresource
-  ```
-  expected status code is `200`, others:
-  - `301` authentication failed, check your `wsadmin` credentials
-  - `404` the bundle is missing
+- bind your `projects` root folder into Docker containers (`Docker Desktop` -> `Preferences` -> `File Sharing` -> add the new entry)
 
 ## How it works
 
@@ -114,6 +89,25 @@ and check details
 
 It also configures the environment (using JCR resource mapping) in a way that it first resolves `/dev` before `/apps`.
 
+### How to build
+Run commands
+```bash
+npm install
+```
+to build the app.
+
+### How to test during development
+In some example project you want to use for testing:
+- add to the `package.json`:
+  ```json
+  {
+    "devDependencies": {
+      "websight-localsync": "file:../../websight-localsync"
+    }
+  }
+  ```
+
+
 ## How to publish
 
 To publish a new package version modify `version` in `package.json` and run `npm publish`.
@@ -121,8 +115,11 @@ You need to be logged in to company's npm account. To log in use `npm login`. Re
 
 ## Troubleshooting
 
-### Switching to environment files versions does not work
+### The dev files are not synchronised
+Verify that the `Apache Sling File System Resource Provider (org.apache.sling.fsresource)` bundle is Active in http://localhost:8080/system/console/bundles/org.apache.sling.fsresource.
+- if Status is `Resolved` you can activate the bundle
 
-You can see dev version of your code even though this script is not running:
+### You can see dev version of your code even though this script is not running
 
 Go to `http://localhost:8080/system/console/configMgr` and search for `Apache Sling File System Resource Provider`. See if there are old mappings to your module and delete them.
+
