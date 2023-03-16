@@ -2,6 +2,7 @@
 
 import {exec} from 'child_process';
 import {setup} from './setup.js';
+import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
 
 const execPromise = function (cmd, silent = false) {
     return new Promise((resolve, reject) => {
@@ -40,7 +41,11 @@ async function unregisterSidecar() {
 }
 
 async function startWatch(silent = true) {
-    await execPromise('npm run watch', silent);
+    try {
+        await execPromise('npm run watch', silent);
+    } catch (e) {
+        console.log('=== Watch has stopped ===');
+    }
 }
 
 function isHelpRequested() {
@@ -75,6 +80,16 @@ function logHelpMessage() {
     console.log('=== Help message is not available yet. ===');
 }
 
+function handleExit() {
+    if (isNoDocker()) {
+        console.log('\n=== Stopping sync with WS instance... ===');
+        stopFsSync();
+    } else {
+        unregisterSidecar();
+        stopDistWatcher();
+    }
+}
+
 async function main() {
     if (isHelpRequested()) {
         logHelpMessage();
@@ -86,12 +101,7 @@ async function main() {
         process.on(event, () => {
             if (!handlingExit) {
                 handlingExit = true;
-                if (isNoDocker()) {
-                    console.log('\n=== Stopping sync with WS instance... ===');
-                    stopFsSync();
-                } else {
-                    unregisterSidecar();
-                }
+                handleExit();
             }
         });
     });
@@ -115,10 +125,13 @@ async function main() {
 
             // TODO multiple watch processes based on config
             console.log('=== Starting code changes watch... ===');
-            await startWatch();
+            startWatch();
+
+            startDistWatcher();
         }
     } catch (err) {
         console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===');
+        handleExit();
     }
 }
 

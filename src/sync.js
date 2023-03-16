@@ -11,13 +11,8 @@ const defaultProviderRootSuffix = projectName;
 let id = '';
 
 export async function startFsSync() {
-    const { distDir, providerRootSuffix } = handleArguments();
-
-    console.log('=======')
-    console.log('start sync')
-    console.log('original', distDir, `${providerRootPrefix}${providerRootSuffix}`)
-    console.log('now', '/ws-localsync', '/dev/apps')
-    console.log('=======')
+    // TODO support arguments
+    // const { distDir, providerRootSuffix } = handleArguments();
 
     const result = await sendRequest(
         'post',
@@ -27,9 +22,7 @@ export async function startFsSync() {
             factoryPid: 'org.apache.sling.fsprovider.internal.FsResourceProvider',
             action: 'ajaxConfigManager',
             '$location': '',
-            // 'provider.file': distDir,
             'provider.file': '/ws-localsync/content',
-            // 'provider.root': `${providerRootPrefix}${providerRootSuffix}`,
             'provider.root': '/dev/apps',
             'provider.fs.mode': 'FILES_FOLDERS',
             'provider.initial.content.import.options': '',

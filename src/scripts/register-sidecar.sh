@@ -2,7 +2,7 @@
 
 containerName="local-compose-cms-1"
 
-if [ "$( docker container inspect -f '{{.State.Running}}' $containerName)" == "true" ];
+if [ "$(docker ps -q -f name=$containerName)" ];
 then
   docker exec $containerName sh "/ws-localsync/.script/register.sh"
 else

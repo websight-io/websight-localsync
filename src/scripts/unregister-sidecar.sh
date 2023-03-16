@@ -2,7 +2,7 @@
 
 containerName="local-compose-cms-1"
 
-if [ ! "$(docker ps -q -f name=$containerName)" ]; then
+if [ "$(docker ps -q -f name=$containerName)" ];
 then
   docker exec $containerName sh "/ws-localsync/.script/unregister.sh"
 else
