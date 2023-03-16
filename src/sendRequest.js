@@ -1,5 +1,5 @@
-const axios = require('axios');
-const FormData = require('form-data');
+import axios from 'axios';
+import { default as FormData } from 'form-data';
 
 async function sendRequest(method, url, formData, headers) {
     try {
@@ -38,5 +38,4 @@ function toFormData(obj) {
     return formData;
 }
 
-module.exports = { sendRequest, toFormData };
-
+export { sendRequest, toFormData };

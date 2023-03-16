@@ -1,6 +1,6 @@
-const qs = require('qs');
-const axios = require('axios');
-const { sendRequest, toFormData } = require('./sendRequest.js');
+import axios from 'axios';
+import { stringify } from 'qs';
+import { sendRequest, toFormData } from './sendRequest.js';
 
 async function setupMappings() {
     let result = await sendRequest(
@@ -20,7 +20,7 @@ async function setupMappings() {
         result = await sendRequest(
             'post',
             'http://localhost:8080/system/console/configMgr/org.apache.sling.jcr.resource.internal.JcrResourceResolverFactoryImpl',
-            qs.stringify({
+            stringify({
                 apply: 'true',
                 action: 'ajaxConfigManager',
                 '$location': '',
@@ -79,4 +79,4 @@ async function setup() {
     ]);
 }
 
-module.exports = { setup };
+export { setup };
