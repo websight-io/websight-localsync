@@ -4,15 +4,20 @@ import {exec} from 'child_process';
 import {setup} from './setup.js';
 import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
 
+const runningProcesses = [];
+
+// TODO handle args (config file + --no-docker, etc.
 const execPromise = function (cmd, silent = false) {
     return new Promise((resolve, reject) => {
-        const {stdout, stderr} = exec(cmd, (error, stdout, stderr) => {
+        const childProcess = exec(cmd, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             } else {
                 resolve();
             }
         });
+        runningProcesses.push(childProcess);
+        const {stdout, stderr} = childProcess;
         if (!silent) {
             stdout.pipe(process.stdout);
             stderr.pipe(process.stderr);
@@ -45,6 +50,15 @@ async function startWatch(silent = true) {
         await execPromise('npm run watch', silent);
     } catch (e) {
         console.log('=== Watch has stopped ===');
+    }
+}
+
+function stopChildProcesses() {
+    if (runningProcesses.length > 0) {
+        console.log(`=== Stopping ${runningProcesses.length} background processes... ===`);
+        runningProcesses.forEach(childProcess => {
+            childProcess.kill('SIGINT');
+        });
     }
 }
 
@@ -88,6 +102,7 @@ function handleExit() {
         unregisterSidecar();
         stopDistWatcher();
     }
+    stopChildProcesses();
 }
 
 async function main() {
