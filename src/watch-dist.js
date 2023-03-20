@@ -1,23 +1,29 @@
 import { watch } from 'chokidar';
-import { copy, mkdir, remove, ensureDirSync } from 'fs-extra';
-import { dirname } from 'path';
+import { copy, mkdir, remove, ensureDir, ensureDirSync } from 'fs-extra';
+import { dirname, join } from 'path';
 import { homedir } from 'os';
 
-const PATH_PREFIX = 'target/dist/apps/';
 const TARGET_PATH_PREFIX = `${homedir}/.ws-localsync/content`;
 
 let watcher = null;
 
-const getPathWithoutPrefix = path => path.replace(PATH_PREFIX, '');
+const getPathWithoutPrefix = (path, prefix) => path.replace(prefix, '');
 
-const getFullSourcePath = path => `${process.cwd()}/${path}`;
+const getTargetPath = (path, modules) => {
+    const specificModuleDir = modules.find(moduleDir => path.startsWith(moduleDir));
+    return join(TARGET_PATH_PREFIX, getPathWithoutPrefix(path, specificModuleDir));
+}
+
+const getModuleWatchDir = (module) => join(process.cwd(), module.source, module.dist);
 
 // TODO remove hard coded path
-export function startDistWatcher() {
-    watcher = watch(PATH_PREFIX, {
+export function startDistWatcher(modules) {
+    const moduleDirs = modules.map(getModuleWatchDir);
+    watcher = watch(moduleDirs, {
        persistent: true,
     });
 
+    console.log('module dirs', moduleDirs)
     console.log('=== Starting file watcher ===');
 
     let isInitialized = false;
@@ -28,61 +34,55 @@ export function startDistWatcher() {
             isInitialized = true;
         })
         .on('add', path => {
-            const localPath = getPathWithoutPrefix(path);
-            const targetPath = `${TARGET_PATH_PREFIX}/${localPath}`;
+            const targetPath = getTargetPath(path, moduleDirs);
             ensureDirSync(dirname(targetPath));
-            copy(getFullSourcePath(path), targetPath, { overwrite: true, recursive: true })
+            copy(path, targetPath, { overwrite: true, recursive: true })
                 .then(() => {
-                    console.log(`Added ${localPath} (${targetPath})`)
+                    console.log(`Added ${targetPath}`)
                 })
                 .catch(err => {
-                    console.error(`Failed to add ${localPath}`, err);
+                    console.error(`Failed to add ${targetPath}`, err);
                 });
         })
         .on('change', path => {
-            const localPath = getPathWithoutPrefix(path);
-            const targetPath = `${TARGET_PATH_PREFIX}/${localPath}`;
+            const targetPath = getTargetPath(path, moduleDirs);
             ensureDirSync(dirname(targetPath));
-            copy(getFullSourcePath(path), targetPath, { overwrite: true, recursive: true })
+            copy(path, targetPath, { overwrite: true, recursive: true })
                 .then(() => {
-                    console.log(`Updated ${localPath} (${targetPath})`)
+                    console.log(`Updated ${targetPath}`)
                 })
                 .catch(err => {
-                    console.error(`Failed to update ${localPath}`, err);
+                    console.error(`Failed to update ${targetPath}`, err);
                 });
         })
         .on('unlink', path => {
-            const localPath = getPathWithoutPrefix(path);
-            const targetPath = `${TARGET_PATH_PREFIX}/${localPath}`;
+            const targetPath = getTargetPath(path, moduleDirs);
             remove(targetPath)
                 .then(() => {
-                    console.log(`Removed ${localPath} (${targetPath})`);
+                    console.log(`Removed ${targetPath}`);
                 })
                 .catch(err => {
-                    console.error(`Failed to remove ${localPath}`, err);
+                    console.error(`Failed to remove ${targetPath}`, err);
                 });
         })
         .on('addDir', path => {
-            const localPath = getPathWithoutPrefix(path);
-            const targetPath = `${TARGET_PATH_PREFIX}/${localPath}`;
-            ensureDirSync(dirname(targetPath));
-            mkdir(targetPath)
+            const targetPath = getTargetPath(path, moduleDirs);
+            ensureDir(targetPath)
                 .then(() => {
-                    console.log(`Created directory ${localPath} (${targetPath})`);
+                    console.log(`Created directory ${targetPath}`);
                 })
                 .catch(err => {
-                    console.error(`Failed to create directory ${localPath}`, err);
+                    console.error(`Failed to create directory ${targetPath}`, err);
                 });
         })
         .on('unlinkDir', path => {
-            const localPath = getPathWithoutPrefix(path);
-            const targetPath = `${TARGET_PATH_PREFIX}/${localPath}`;
+            const targetPath = getTargetPath(path, moduleDirs);
             remove(targetPath)
                 .then(() => {
-                    console.log(`Removed ${localPath} (${targetPath})`);
+                    console.log(`Removed ${targetPath}`);
                 })
                 .catch(err => {
-                    console.error(`Failed to remove ${localPath}`, err);
+                    console.error(`Failed to remove ${targetPath}`, err);
                 });
         });
 }

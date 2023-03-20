@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
+import { join } from 'path';
 import {exec} from 'child_process';
 import {setup} from './setup.js';
 import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
+import {getConfig} from "./handleConfig.js";
 
 const runningProcesses = [];
 
@@ -45,11 +47,14 @@ async function unregisterSidecar() {
     `);
 }
 
-async function startWatch(silent = true) {
+async function startWatch(dir = '.', silent = true) {
     try {
-        await execPromise('npm run watch', silent);
+        await execPromise(`
+            cd ${join(process.cwd(), dir)} &&
+            npm run watch
+        `, silent);
     } catch (e) {
-        console.log('=== Watch has stopped ===');
+        console.log('=== Watch has stopped ===', JSON.stringify(e, null, 2));
     }
 }
 
@@ -64,10 +69,6 @@ function stopChildProcesses() {
 
 function isHelpRequested() {
     return process.argv.includes('--help');
-}
-
-function isNoDocker() {
-    return process.argv.includes('--no-docker');
 }
 
 function logHelpMessage() {
@@ -94,13 +95,13 @@ function logHelpMessage() {
     console.log('=== Help message is not available yet. ===');
 }
 
-function handleExit() {
-    if (isNoDocker()) {
-        console.log('\n=== Stopping sync with WS instance... ===');
-        stopFsSync();
-    } else {
+function handleExit(isDocker) {
+    if (isDocker) {
         unregisterSidecar();
         stopDistWatcher();
+    } else {
+        console.log('\n=== Stopping sync with WS instance... ===');
+        stopFsSync();
     }
     stopChildProcesses();
 }
@@ -111,18 +112,31 @@ async function main() {
         return;
     }
 
+    const config = getConfig();
+
     let handlingExit = false;
     ['SIGINT'].forEach(event => {
         process.on(event, () => {
             if (!handlingExit) {
                 handlingExit = true;
-                handleExit();
+                handleExit(config.docker);
             }
         });
     });
 
     try {
-        if (isNoDocker()) {
+        if (config.docker) {
+            console.log('=== Preparing environment for sidecar app... ===');
+            await prepareSidecar();
+
+            console.log('=== Registering sidecar app in CMS container... ===');
+            await registerSidecar();
+
+            console.log('=== Starting code changes watch... ===');
+            config.modules.map(module => startWatch(module.source));
+
+            startDistWatcher(config.modules);
+        } else {
             console.log('=== Setting up the the server... ===');
             await setup();
 
@@ -130,23 +144,11 @@ async function main() {
             await startFsSync();
 
             console.log('=== Starting code changes watch... ===');
-            await startWatch(false);
-        } else {
-            console.log('=== Preparing environment for sidecar app... ===');
-            await prepareSidecar();
-
-            console.log('=== Registering sidecar app in CMS container... ===');
-            await registerSidecar();
-
-            // TODO multiple watch processes based on config
-            console.log('=== Starting code changes watch... ===');
-            startWatch();
-
-            startDistWatcher();
+            await Promise.all(config.modules.map(module => startWatch(module.source, false)));
         }
     } catch (err) {
-        console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===');
-        handleExit();
+        console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===', err);
+        handleExit(config.docker);
     }
 }
 
