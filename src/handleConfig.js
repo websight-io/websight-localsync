@@ -1,4 +1,4 @@
-import * as path from 'path';
+import { join } from 'path';
 import {existsSync, readFileSync} from "fs-extra";
 
 const ARG_NO_DOCKER = '--no-docker';
@@ -10,10 +10,27 @@ const ARG_TARGET_DIR = '--target-dir';
 const DEFAULT_DOCKER = true;
 const DEFAULT_CONTAINER_NAME = 'local-compose-cms-1';
 const DEFAULT_SOURCE = '.';
-const DEFAULT_DIST = 'target/dist/apps';
-const DEFAULT_TARGET_DIR = '';
+const DEFAULT_DIST_PREFIX = 'target/dist/apps';
 
 const currentDir = process.cwd();
+
+function getModuleName(source) {
+    return source.includes('/') ? source.split('/').pop() : currentDir.split('/').pop();
+}
+
+function getModuleArgs(sourceValue, distValue, targetDirValue) {
+    if (sourceValue != null || distValue != null || targetDirValue != null) {
+        const moduleName = getModuleName(sourceValue);
+
+        const source = sourceValue ?? DEFAULT_SOURCE;
+        const dist = distValue ?? join(DEFAULT_DIST_PREFIX, moduleName);
+        const targetDir = targetDirValue ?? moduleName;
+
+        return { source, dist, targetDir };
+    } else {
+        return undefined;
+    }
+}
 
 function getArgValue(argName) {
     const argNameIndex = process.argv.indexOf(argName);
@@ -24,17 +41,11 @@ function getArguments() {
     const dockerArgs = process.argv.includes(ARG_NO_DOCKER) ? { docker: false } : undefined;
     const dockerContainerName = getArgValue(ARG_CONTAINER_NAME);
 
-    const source = getArgValue(ARG_SOURCE);
-    const dist = getArgValue(ARG_DIST);
-    const targetDir = getArgValue(ARG_TARGET_DIR);
-
-    const moduleArgs = (source != null || dist != null || targetDir != null)
-        ? {
-            ...({ source: source ?? DEFAULT_SOURCE }),
-            ...({ dist: dist ?? DEFAULT_DIST}),
-            ...({ targetDir: targetDir ?? DEFAULT_TARGET_DIR})
-        }
-        : undefined;
+    const moduleArgs = getModuleArgs(
+        getArgValue(ARG_SOURCE),
+        getArgValue(ARG_DIST),
+        getArgValue(ARG_TARGET_DIR)
+    );
 
     return {
         ...(dockerArgs ?? {}),
@@ -44,7 +55,7 @@ function getArguments() {
 }
 
 function readConfigFile() {
-    const configFilePath = path.join(currentDir, '.ws-localsync.json');
+    const configFilePath = join(currentDir, '.ws-localsync.json');
     if (existsSync(configFilePath)) {
         const configFile = readFileSync(configFilePath, 'utf8');
         try {
@@ -52,11 +63,16 @@ function readConfigFile() {
 
             return {
                 ...fileContent,
-                modules: fileContent.modules?.map(module => ({
-                    source: module.source ?? DEFAULT_SOURCE,
-                    dist: module.dist ?? DEFAULT_DIST,
-                    targetDir: module.targetDir ?? DEFAULT_TARGET_DIR,
-                })),
+                modules: fileContent.modules?.map(module => {
+                    const source = module.source ?? DEFAULT_SOURCE;
+                    const moduleName = getModuleName(source);
+
+                    return ({
+                        source,
+                        dist: module.dist ?? join(DEFAULT_DIST_PREFIX, moduleName),
+                        targetDir: module.targetDir ?? moduleName,
+                    });
+                }),
             }
         } catch (e) {
             console.error(`=== Error while parsing config file, please make sure it's a valid JSON. ===`);
@@ -86,8 +102,8 @@ export function getConfig() {
     const dockerContainerName = argsConfig.dockerContainerName ?? fileConfig?.dockerContainerName ?? DEFAULT_CONTAINER_NAME;
     const modules = argsConfig.modules ?? fileConfig?.modules ?? [{
         source: DEFAULT_SOURCE,
-        dist: DEFAULT_DIST,
-        targetDir: DEFAULT_TARGET_DIR,
+        dist: DEFAULT_DIST_PREFIX,
+        targetDir: getModuleName(DEFAULT_SOURCE),
     }];
 
     return {

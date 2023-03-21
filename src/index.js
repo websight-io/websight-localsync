@@ -5,6 +5,7 @@ import {exec} from 'child_process';
 import {setup} from './setup.js';
 import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
 import {getConfig} from "./handleConfig.js";
+import {startFsSync} from "./sync.js";
 
 const runningProcesses = [];
 
@@ -140,7 +141,7 @@ async function main() {
             await setup();
 
             console.log('=== Starting sync with WS instance... ===');
-            await startFsSync();
+            await startFsSync(false);
 
             console.log('=== Starting code changes watch... ===');
             await Promise.all(config.modules.map(module => startWatch(module.source, false)));

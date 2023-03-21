@@ -1,7 +1,7 @@
-import { watch } from 'chokidar';
-import { copy, mkdir, remove, ensureDir, ensureDirSync } from 'fs-extra';
-import { dirname, join } from 'path';
-import { homedir } from 'os';
+import {watch} from 'chokidar';
+import {copy, ensureDir, ensureDirSync, remove} from 'fs-extra';
+import {dirname, join} from 'path';
+import {homedir} from 'os';
 
 const TARGET_PATH_PREFIX = `${homedir}/.ws-localsync/content`;
 
@@ -10,15 +10,15 @@ let watcher = null;
 const getPathWithoutPrefix = (path, prefix) => path.replace(prefix, '');
 
 const getTargetPath = (path, modules) => {
-    const specificModuleDir = modules.find(moduleDir => path.startsWith(moduleDir));
-    return join(TARGET_PATH_PREFIX, getPathWithoutPrefix(path, specificModuleDir));
+    const specificModule = modules.find(module => path.startsWith(module.watchDir));
+    return join(TARGET_PATH_PREFIX, specificModule.targetDir, getPathWithoutPrefix(path, specificModule.watchDir));
 }
 
 const getModuleWatchDir = (module) => join(process.cwd(), module.source, module.dist);
 
 export function startDistWatcher(modules) {
-    const moduleDirs = modules.map(getModuleWatchDir);
-    watcher = watch(moduleDirs, {
+    const modulesWithWatchDirs = modules.map(module => ({ ...module, watchDir: getModuleWatchDir(module) }));
+    watcher = watch(modulesWithWatchDirs.map(module => module.watchDir), {
        persistent: true,
     });
 
@@ -32,7 +32,7 @@ export function startDistWatcher(modules) {
             isInitialized = true;
         })
         .on('add', path => {
-            const targetPath = getTargetPath(path, moduleDirs);
+            const targetPath = getTargetPath(path, modulesWithWatchDirs);
             ensureDirSync(dirname(targetPath));
             copy(path, targetPath, { overwrite: true, recursive: true })
                 .then(() => {
@@ -43,7 +43,7 @@ export function startDistWatcher(modules) {
                 });
         })
         .on('change', path => {
-            const targetPath = getTargetPath(path, moduleDirs);
+            const targetPath = getTargetPath(path, modulesWithWatchDirs);
             ensureDirSync(dirname(targetPath));
             copy(path, targetPath, { overwrite: true, recursive: true })
                 .then(() => {
@@ -54,7 +54,7 @@ export function startDistWatcher(modules) {
                 });
         })
         .on('unlink', path => {
-            const targetPath = getTargetPath(path, moduleDirs);
+            const targetPath = getTargetPath(path, modulesWithWatchDirs);
             remove(targetPath)
                 .then(() => {
                     console.log(`Removed ${targetPath}`);
@@ -64,7 +64,7 @@ export function startDistWatcher(modules) {
                 });
         })
         .on('addDir', path => {
-            const targetPath = getTargetPath(path, moduleDirs);
+            const targetPath = getTargetPath(path, modulesWithWatchDirs);
             ensureDir(targetPath)
                 .then(() => {
                     console.log(`Created directory ${targetPath}`);
@@ -74,7 +74,7 @@ export function startDistWatcher(modules) {
                 });
         })
         .on('unlinkDir', path => {
-            const targetPath = getTargetPath(path, moduleDirs);
+            const targetPath = getTargetPath(path, modulesWithWatchDirs);
             remove(targetPath)
                 .then(() => {
                     console.log(`Removed ${targetPath}`);
