@@ -8,7 +8,6 @@ import {getConfig} from "./handleConfig.js";
 
 const runningProcesses = [];
 
-// TODO handle args (config file + --no-docker, etc.
 const execPromise = function (cmd, silent = false) {
     return new Promise((resolve, reject) => {
         const childProcess = exec(cmd, (error, stdout, stderr) => {
@@ -27,23 +26,23 @@ const execPromise = function (cmd, silent = false) {
     });
 }
 
-async function prepareSidecar() {
+async function prepareSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./prepare-sidecar.sh
+        sh ./prepare-sidecar.sh -c ${containerName}
     `);
 }
-async function registerSidecar() {
+async function registerSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./register-sidecar.sh
+        sh ./register-sidecar.sh -c ${containerName}
     `);
 }
 
-async function unregisterSidecar() {
+async function unregisterSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./unregister-sidecar.sh
+        sh ./unregister-sidecar.sh -c ${containerName}
     `);
 }
 
@@ -95,9 +94,9 @@ function logHelpMessage() {
     console.log('=== Help message is not available yet. ===');
 }
 
-function handleExit(isDocker) {
-    if (isDocker) {
-        unregisterSidecar();
+function handleExit(config) {
+    if (config.docker) {
+        unregisterSidecar(config.dockerContainerName);
         stopDistWatcher();
     } else {
         console.log('\n=== Stopping sync with WS instance... ===');
@@ -119,7 +118,7 @@ async function main() {
         process.on(event, () => {
             if (!handlingExit) {
                 handlingExit = true;
-                handleExit(config.docker);
+                handleExit(config);
             }
         });
     });
@@ -127,10 +126,10 @@ async function main() {
     try {
         if (config.docker) {
             console.log('=== Preparing environment for sidecar app... ===');
-            await prepareSidecar();
+            await prepareSidecar(config.dockerContainerName);
 
             console.log('=== Registering sidecar app in CMS container... ===');
-            await registerSidecar();
+            await registerSidecar(config.dockerContainerName);
 
             console.log('=== Starting code changes watch... ===');
             config.modules.map(module => startWatch(module.source));
@@ -148,7 +147,7 @@ async function main() {
         }
     } catch (err) {
         console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===', err);
-        handleExit(config.docker);
+        handleExit(config);
     }
 }
 

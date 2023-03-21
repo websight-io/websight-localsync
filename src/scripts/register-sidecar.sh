@@ -1,6 +1,11 @@
 #!/bin/bash
 
-containerName="local-compose-cms-1"
+while getopts c: flag
+do
+  case "${flag}" in
+    c) containerName=${OPTARG};;
+  esac
+done
 
 if [ "$(docker ps -q -f name=$containerName)" ];
 then

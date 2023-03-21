@@ -16,14 +16,12 @@ const getTargetPath = (path, modules) => {
 
 const getModuleWatchDir = (module) => join(process.cwd(), module.source, module.dist);
 
-// TODO remove hard coded path
 export function startDistWatcher(modules) {
     const moduleDirs = modules.map(getModuleWatchDir);
     watcher = watch(moduleDirs, {
        persistent: true,
     });
 
-    console.log('module dirs', moduleDirs)
     console.log('=== Starting file watcher ===');
 
     let isInitialized = false;
