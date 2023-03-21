@@ -1,20 +1,27 @@
 #!/bin/bash
 
-# TODO fix script availability check (currently it's not working)
-if ! command -v nvm &>/dev/null; then
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+initNvm() {
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+}
+
+initNvm;
+command -v nvm;
+if [ $? -ne 0 ]
+then
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+  initNvm;
 else
-  echo "nvm is already installed, skipping installation"
+  echo "=== nvm is already installed, skipping installation ==="
+  nvm use node;
 fi
 
-if ! command -v node &>/dev/null; then
+command -v node;
+if [ $? -ne 0 ]
+then
   # TODO check right node version as well
-  # TODO check with Hydrogen (v18)
-  # Gallium is v16.x.y
-  nvm install --lts=Gallium
+  # Hydrogen is v18.x.y
+  nvm install --lts=Hydrogen;
 else
-  echo "node is already installed, skipping installation"
+  echo "=== node is already installed (version: $(node -v)), skipping installation ==="
 fi

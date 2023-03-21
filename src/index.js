@@ -146,7 +146,8 @@ async function main() {
             await Promise.all(config.modules.map(module => startWatch(module.source, false)));
         }
     } catch (err) {
-        console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===', err);
+        console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===');
+        console.log(err);
         handleExit(config);
     }
 }
