@@ -29,20 +29,20 @@ const execPromise = function (cmd, silent = false) {
 async function prepareSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./prepare-sidecar.sh -c ${containerName}
+        bash ./prepare-sidecar.sh -c ${containerName}
     `);
 }
 async function registerSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./register-sidecar.sh -c ${containerName}
+        bash ./register-sidecar.sh -c ${containerName}
     `);
 }
 
 async function unregisterSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
-        sh ./unregister-sidecar.sh -c ${containerName}
+        bash ./unregister-sidecar.sh -c ${containerName}
     `);
 }
 
