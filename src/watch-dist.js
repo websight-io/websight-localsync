@@ -7,15 +7,40 @@ const TARGET_PATH_PREFIX = `${homedir}/.ws-localsync/content`;
 
 let watcher = null;
 
+/**
+ * Removes the prefix from the path
+ *
+ * @param {string} path the path of the file
+ * @param {string} prefix the prefix to remove
+ * @returns {string} path without prefix
+ */
 const getPathWithoutPrefix = (path, prefix) => path.replace(prefix, '');
 
+/**
+ * Generates the target path for the given path
+ *
+ * @param {string} path the path where the file was changed
+ * @param {Array<Config>} modules the modules to where the file watcher is watching
+ * @returns {string} the target path
+ */
 const getTargetPath = (path, modules) => {
     const specificModule = modules.find(module => path.startsWith(module.watchDir));
     return join(TARGET_PATH_PREFIX, specificModule.targetDir, getPathWithoutPrefix(path, specificModule.watchDir));
 }
 
+/**
+ * Returns the directory where the file watcher should watch for changes
+ *
+ * @param {Config} module the module config
+ * @returns {string} the directory where the file watcher should watch for changes
+ */
 const getModuleWatchDir = (module) => join(process.cwd(), module.source, module.dist);
 
+/**
+ * Starts the file watcher for the given modules
+ *
+ * @param {Array<Module>} modules the modules to start the file watcher for
+ */
 export function startDistWatcher(modules) {
     const modulesWithWatchDirs = modules.map(module => ({ ...module, watchDir: getModuleWatchDir(module) }));
     watcher = watch(modulesWithWatchDirs.map(module => module.watchDir), {
@@ -85,6 +110,9 @@ export function startDistWatcher(modules) {
         });
 }
 
+/**
+ * Stops the file watcher
+ */
 export function stopDistWatcher() {
     if (watcher != null) {
         watcher.close()

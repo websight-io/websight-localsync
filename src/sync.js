@@ -1,4 +1,4 @@
-import {sendRequest} from "./sendRequest.js";
+import {sendRequest} from "./send-request.js";
 import {stringify} from "qs";
 import {emptyDirSync} from "fs-extra";
 
@@ -7,6 +7,12 @@ import { homedir } from "os";
 
 let id = '';
 
+/**
+ * Starts the FsResourceProvider
+ *
+ * @param {boolean} isInDockerContainer whether the application is running in a docker container
+ * @returns {Promise<void>} promise that resolves when the FsResourceProvider is started
+ */
 export async function startFsSync(isInDockerContainer = true) {
     const result = await sendRequest(
         'post',
@@ -32,6 +38,11 @@ export async function startFsSync(isInDockerContainer = true) {
     }
 }
 
+/**
+ * Stops the FsResourceProvider
+ *
+ * @returns {Promise<void>} promise that resolves when the FsResourceProvider is stopped
+ */
 export async function stopFsSync() {
     const result = await sendRequest(
         'post',
@@ -46,6 +57,9 @@ export async function stopFsSync() {
     }
 }
 
+/**
+ * Clears the sync directory on the local machine
+ */
 export function clearFSSyncDirectory() {
     console.log(`=== Clearing sync directory... ===`);
     emptyDirSync(join(homedir(), '/.ws-localsync/content'));

@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { stringify } from 'qs';
-import { sendRequest, toFormData } from './sendRequest.js';
+import { sendRequest, toFormData } from './send-request.js';
 
+/**
+ * Setup of the directory mappings from /dev/apps to /apps
+ *
+ * @returns {Promise<void>} promise that resolves when the mappings are set up
+ */
 async function setupMappings() {
     let result = await sendRequest(
         'post',
@@ -35,6 +40,11 @@ async function setupMappings() {
     }
 }
 
+/**
+ * Setup of the FsResourceProvider
+ *
+ * @returns {Promise<void>} promise that resolves when the FsResourceProvider is set up
+ */
 async function setupFsResourceProvider() {
     const response = await sendRequest(
         'post',
@@ -72,6 +82,11 @@ async function setupFsResourceProvider() {
 
 }
 
+/**
+ * Setup of the file mappings and the FsResourceProvider
+ *
+ * @returns {Promise<Awaited<void>[]>} promise that resolves when the mappings and the FsResourceProvider are set up
+ */
 async function setup() {
     return Promise.all([
         setupMappings(),

@@ -1,41 +1,27 @@
 #!/usr/bin/env node
 
-import { join } from 'path';
-import {exec} from 'child_process';
+import {join} from 'path';
 import {setup} from './setup.js';
 import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
-import {getConfig} from "./handleConfig.js";
-import {clearFSSyncDirectory, startFsSync} from "./sync.js";
+import {getConfig} from "./handle-config.js";
+import {clearFSSyncDirectory, startFsSync, stopFsSync} from "./sync.js";
+import {execPromise, stopChildProcesses} from "./child-processes.js";
 
-// TODO add clear option - remove all synced resources from home directory
-// should we do it automatically when the script is started?
-
-const runningProcesses = [];
-
-const execPromise = function (cmd, silent = false) {
-    return new Promise((resolve, reject) => {
-        const childProcess = exec(cmd, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve();
-            }
-        });
-        runningProcesses.push(childProcess);
-        const {stdout, stderr} = childProcess;
-        if (!silent) {
-            stdout.pipe(process.stdout);
-            stderr.pipe(process.stderr);
-        }
-    });
-}
-
+/**
+ * @param {string} containerName name of the Docker container to prepare the sidecar for
+ * @returns {Promise<void>} promise that resolves when the sidecar is prepared
+ */
 async function prepareSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
         bash ./prepare-sidecar.sh -c ${containerName}
     `);
 }
+
+/**
+ * @param {string} containerName name of the Docker container to register the sidecar for
+ * @returns {Promise<void>} promise that resolves when the sidecar is registered
+ */
 async function registerSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
@@ -43,6 +29,10 @@ async function registerSidecar(containerName) {
     `);
 }
 
+/**
+ * @param {string} containerName name of the Docker container to unregister the sidecar from
+ * @returns {Promise<void>} promise that resolves when the sidecar is unregistered
+ */
 async function unregisterSidecar(containerName) {
     await execPromise(`
         cd ./node_modules/websight-localsync/dist/scripts
@@ -50,6 +40,11 @@ async function unregisterSidecar(containerName) {
     `);
 }
 
+/**
+ * @param {string} dir directory to start the file change watcher script in
+ * @param {boolean} silent whether to suppress the output of the script
+ * @returns {Promise<void>} promise that resolves when the watcher script is stopped
+ */
 async function startWatch(dir = '.', silent = true) {
     try {
         await execPromise(`
@@ -61,19 +56,16 @@ async function startWatch(dir = '.', silent = true) {
     }
 }
 
-function stopChildProcesses() {
-    if (runningProcesses.length > 0) {
-        console.log(`=== Stopping ${runningProcesses.length} background processes... ===`);
-        runningProcesses.forEach(childProcess => {
-            childProcess.kill('SIGINT');
-        });
-    }
-}
-
+/**
+ * @returns {boolean} true if the --help argument was passed to the script
+ */
 function isHelpRequested() {
     return process.argv.includes('--help');
 }
 
+/**
+ * Logs help message to the console
+ */
 function logHelpMessage() {
 //     console.log(`
 // Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
@@ -98,13 +90,18 @@ function logHelpMessage() {
     console.log('=== Help message is not available yet. ===');
 }
 
-function handleExit(config) {
+/**
+ * Tears down the environment when the script is stopped
+ *
+ * @param {Config} config configuration object
+ */
+async function handleExit(config) {
     if (config.docker) {
-        unregisterSidecar(config.dockerContainerName);
         stopDistWatcher();
+        await unregisterSidecar(config.dockerContainerName);
     } else {
         console.log('\n=== Stopping sync with WS instance... ===');
-        stopFsSync();
+        await stopFsSync();
     }
     stopChildProcesses();
     clearFSSyncDirectory();
@@ -153,8 +150,7 @@ async function main() {
         }
     } catch (err) {
         console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===');
-        console.log(err);
-        handleExit(config);
+        await handleExit(config);
     }
 }
 
