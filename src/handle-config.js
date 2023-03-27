@@ -8,9 +8,9 @@ const ARG_DIST = '--dist';
 const ARG_TARGET_DIR = '--target-dir';
 
 const DEFAULT_DOCKER = true;
-const DEFAULT_CONTAINER_NAME = 'local-compose-cms-1';
-const DEFAULT_SOURCE = '.';
-const DEFAULT_DIST_PREFIX = 'target/dist/apps';
+export const DEFAULT_CONTAINER_NAME = 'local-compose-cms-1';
+export const DEFAULT_SOURCE = '.';
+export const DEFAULT_DIST_PREFIX = 'target/dist/apps';
 
 const currentDir = process.cwd();
 

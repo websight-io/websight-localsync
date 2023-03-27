@@ -3,7 +3,11 @@ import { join } from 'path';
 
 import setup from './setup';
 import { startDistWatcher, stopDistWatcher } from './watch-dist';
-import getConfig from './handle-config';
+import getConfig, {
+    DEFAULT_CONTAINER_NAME,
+    DEFAULT_DIST_PREFIX,
+    DEFAULT_SOURCE,
+} from './handle-config';
 import { clearFSSyncDirectory, startFsSync, stopFsSync } from './sync';
 import { execPromise, stopChildProcesses } from './child-processes';
 
@@ -75,27 +79,42 @@ function isHelpRequested() {
  * Logs help message to the console
  */
 function logHelpMessage() {
-    //     console.log(`
-    // Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
-    //
-    //     "scripts": {
-    //         ...
-    //         "sync": "websight-localsync [option...]"
-    //     }
-    //
-    // Options:
-    //     target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project
-    //     provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project
-    //
-    // Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.
-    //     Run "npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources" or configure it as a script entry in package.json:
-    //
-    //     "scripts": {
-    //         ...
-    //         "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
-    //     }`);
-    // TODO: add help message
-    console.log('=== Help message is not available yet. ===');
+    console.log(`
+    Usage: run "npx websight-localsync [options]" or configure it as a script entry in package.json:
+
+    "scripts": {
+        ...
+        "sync": "websight-localsync [options]"
+    }
+    
+    Options take precedence over the config file.
+
+    Options:
+        --no-docker: CMS is not running in a Docker container (Default: true)
+        --container-name: name of the Docker container where the CMS is running (Default: "${DEFAULT_CONTAINER_NAME}")
+        --source: path to the source directory of the module/project to sync (Default: "${DEFAULT_SOURCE}")
+        --dist: path to the dist directory of the module/project to sync (under the "source" directory) (Default: "${DEFAULT_DIST_PREFIX}")
+        --target-dir: path to the directory where the synced files should be provided (Default: derived from the "source" directory's path's last part, e.g. dspl-website)
+    
+    Config file:
+        You can also create a ".ws-localsync.json" file in the root directory of your project to configure the sync.
+        To sync multiple modules at ones, it's necessary to create a config file.
+        The file should contain a JSON object with the following properties:
+        {
+            "docker": boolean, // default: true
+            "dockerContainerName": string, // default: "${DEFAULT_CONTAINER_NAME}"
+            "modules": [
+                {
+                    "source": string, // default: "${DEFAULT_SOURCE}",
+                    "dist": string, // default: "${DEFAULT_DIST_PREFIX}",
+                    "targetDir": string // default: derived from the "source" directory's path's last part, e.g. dspl-website
+                },
+                {
+                    //...
+                }
+            ]
+        }
+    `);
 }
 
 /**
