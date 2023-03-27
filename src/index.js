@@ -52,7 +52,9 @@ async function startWatch(dir = '.', silent = true) {
             npm run watch
         `, silent);
     } catch (e) {
-        console.log('=== Watch has stopped ===', JSON.stringify(e, null, 2));
+        if (e.signal !== 'SIGINT') {
+            console.log('=== Watch has stopped ===', JSON.stringify(e, null, 2));
+        }
     }
 }
 
