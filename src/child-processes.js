@@ -1,4 +1,4 @@
-import {exec} from "child_process";
+import { exec } from 'child_process';
 
 /**
  * @type {*[]} list of child processes that were started by the script
@@ -20,7 +20,7 @@ function execPromise(cmd, silent = false) {
             }
         });
         runningProcesses.push(childProcess);
-        const {stdout, stderr} = childProcess;
+        const { stdout, stderr } = childProcess;
         if (!silent) {
             stdout.pipe(process.stdout);
             stderr.pipe(process.stderr);
@@ -33,11 +33,13 @@ function execPromise(cmd, silent = false) {
  */
 function stopChildProcesses() {
     if (runningProcesses.length > 0) {
-        console.log(`=== Stopping ${runningProcesses.length} background processes... ===`);
-        runningProcesses.forEach(childProcess => {
+        console.log(
+            `=== Stopping ${runningProcesses.length} background processes... ===`
+        );
+        runningProcesses.forEach((childProcess) => {
             childProcess.kill('SIGINT');
         });
     }
 }
 
-export { execPromise, stopChildProcesses};
+export { execPromise, stopChildProcesses };

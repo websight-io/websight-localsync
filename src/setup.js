@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { stringify } from 'qs';
-import { sendRequest, toFormData } from './send-request.js';
+
+import { sendRequest, toFormData } from './send-request';
 
 /**
  * Setup of the directory mappings from /dev/apps to /apps
@@ -14,7 +15,12 @@ async function setupMappings() {
     );
 
     if (result.status === 200) {
-        const props = Object.fromEntries(Object.entries(result.data.properties).map(([key, value]) => ([key, value.value || value.values])));
+        const props = Object.fromEntries(
+            Object.entries(result.data.properties).map(([key, value]) => [
+                key,
+                value.value || value.values,
+            ])
+        );
         if (props['resource.resolver.mapping'].includes('/dev/apps/:/apps/')) {
             console.log('Mapping already configured');
             return;
@@ -25,13 +31,16 @@ async function setupMappings() {
         result = await sendRequest(
             'post',
             'http://localhost:8080/system/console/configMgr/org.apache.sling.jcr.resource.internal.JcrResourceResolverFactoryImpl',
-            stringify({
-                apply: 'true',
-                action: 'ajaxConfigManager',
-                '$location': '',
-                ...props,
-                'propertylist': Object.keys(props).join(',')
-            }, { arrayFormat: 'repeat' })
+            stringify(
+                {
+                    apply: 'true',
+                    action: 'ajaxConfigManager',
+                    $location: '',
+                    ...props,
+                    propertylist: Object.keys(props).join(','),
+                },
+                { arrayFormat: 'repeat' }
+            )
         );
 
         if (result.status === 302) {
@@ -59,27 +68,30 @@ async function setupFsResourceProvider() {
         'https://repo1.maven.org/maven2/org/apache/sling/org.apache.sling.fsresource/2.2.0/org.apache.sling.fsresource-2.2.0.jar',
         { responseType: 'stream' }
     );
-    if (await sendRequest(
-        'post',
-        'http://localhost:8080/system/console/bundles',
-        toFormData({
-            action: 'install',
-            bundlefile: bundleFile.data
-        })
-    ) != null) {
+    if (
+        (await sendRequest(
+            'post',
+            'http://localhost:8080/system/console/bundles',
+            toFormData({
+                action: 'install',
+                bundlefile: bundleFile.data,
+            })
+        )) != null
+    ) {
         console.log('Installed FsResourceProvider');
     }
 
-    if (await sendRequest(
-        'post',
-        'http://localhost:8080/system/console/bundles/org.apache.sling.fsresource',
-        toFormData({
-            action: 'start'
-        })
-    ) != null) {
+    if (
+        (await sendRequest(
+            'post',
+            'http://localhost:8080/system/console/bundles/org.apache.sling.fsresource',
+            toFormData({
+                action: 'start',
+            })
+        )) != null
+    ) {
         console.log('Activated FsResourceProvider');
     }
-
 }
 
 /**
@@ -87,11 +99,6 @@ async function setupFsResourceProvider() {
  *
  * @returns {Promise<Awaited<void>[]>} promise that resolves when the mappings and the FsResourceProvider are set up
  */
-async function setup() {
-    return Promise.all([
-        setupMappings(),
-        setupFsResourceProvider()
-    ]);
+export default async function setup() {
+    return Promise.all([setupMappings(), setupFsResourceProvider()]);
 }
-
-export { setup };

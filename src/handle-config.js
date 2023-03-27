@@ -1,5 +1,5 @@
 import { join } from 'path';
-import {existsSync, readFileSync} from "fs-extra";
+import { existsSync, readFileSync } from 'fs-extra';
 
 const ARG_NO_DOCKER = '--no-docker';
 const ARG_CONTAINER_NAME = '--container-name';
@@ -26,13 +26,14 @@ const currentDir = process.cwd();
  * @property {Module[]} modules list of modules to sync
  */
 
-
 /**
  * @param source {string} source value of a module config object
  * @returns {string} module name derived from the source value
  */
 function getModuleName(source) {
-    return source?.includes('/') ? source.split('/').pop() : currentDir.split('/').pop();
+    return source?.includes('/')
+        ? source.split('/').pop()
+        : currentDir.split('/').pop();
 }
 
 /**
@@ -50,9 +51,8 @@ function getModuleArgs(sourceValue, distValue, targetDirValue) {
         const targetDir = targetDirValue ?? moduleName;
 
         return { source, dist, targetDir };
-    } else {
-        return undefined;
     }
+    return undefined;
 }
 
 /**
@@ -68,7 +68,9 @@ function getArgValue(argName) {
  * @returns {Config} config object based on arguments passed to the script
  */
 function getArguments() {
-    const dockerArgs = process.argv.includes(ARG_NO_DOCKER) ? { docker: false } : undefined;
+    const dockerArgs = process.argv.includes(ARG_NO_DOCKER)
+        ? { docker: false }
+        : undefined;
     const dockerContainerName = getArgValue(ARG_CONTAINER_NAME);
 
     const moduleArgs = getModuleArgs(
@@ -81,9 +83,8 @@ function getArguments() {
         ...(dockerArgs ?? {}),
         ...(moduleArgs ? { modules: [moduleArgs] } : {}),
         ...(dockerContainerName ? { dockerContainerName } : {}),
-    }
+    };
 }
-
 
 /**
  * @returns {Config | null } config object based on config file or null if no config file was found or it was invalid
@@ -97,19 +98,23 @@ function readConfigFile() {
 
             return {
                 ...fileContent,
-                modules: fileContent.modules?.map(module => {
+                modules: fileContent.modules?.map((module) => {
                     const source = module.source ?? DEFAULT_SOURCE;
                     const moduleName = getModuleName(source);
 
-                    return ({
+                    return {
                         source,
-                        dist: module.dist ?? join(DEFAULT_DIST_PREFIX, moduleName),
+                        dist:
+                            module.dist ??
+                            join(DEFAULT_DIST_PREFIX, moduleName),
                         targetDir: module.targetDir ?? moduleName,
-                    });
+                    };
                 }),
-            }
+            };
         } catch (e) {
-            console.error(`=== Error while parsing config file, please make sure it's a valid JSON. ===`);
+            console.error(
+                `=== Error while parsing config file, please make sure it's a valid JSON. ===`
+            );
             return null;
         }
     } else {
@@ -121,24 +126,30 @@ function readConfigFile() {
 /**
  * @returns {Config} config - configuration object based on config file and arguments (args override config file)
  */
-export function getConfig() {
+export default function getConfig() {
     const fileConfig = readConfigFile();
 
     const argsConfig = getArguments();
 
     const docker = argsConfig.docker ?? fileConfig?.docker ?? DEFAULT_DOCKER;
-    const dockerContainerName = argsConfig.dockerContainerName ?? fileConfig?.dockerContainerName ?? DEFAULT_CONTAINER_NAME;
-    const modules = argsConfig.modules ?? fileConfig?.modules ?? [{
-        source: DEFAULT_SOURCE,
-        dist: DEFAULT_DIST_PREFIX,
-        targetDir: getModuleName(DEFAULT_SOURCE),
-    }];
+    const dockerContainerName =
+        argsConfig.dockerContainerName ??
+        fileConfig?.dockerContainerName ??
+        DEFAULT_CONTAINER_NAME;
+    const modules = argsConfig.modules ??
+        fileConfig?.modules ?? [
+            {
+                source: DEFAULT_SOURCE,
+                dist: DEFAULT_DIST_PREFIX,
+                targetDir: getModuleName(DEFAULT_SOURCE),
+            },
+        ];
 
     return {
         docker,
         dockerContainerName,
         modules,
-    }
+    };
 }
 
 // TODO test thoroughly (config file, args, etc. - config file in ds.pl - args overriding config file)

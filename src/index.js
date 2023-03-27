@@ -1,11 +1,11 @@
 #!/usr/bin/env node
+import { join } from 'path';
 
-import {join} from 'path';
-import {setup} from './setup.js';
-import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
-import {getConfig} from "./handle-config.js";
-import {clearFSSyncDirectory, startFsSync, stopFsSync} from "./sync.js";
-import {execPromise, stopChildProcesses} from "./child-processes.js";
+import setup from './setup';
+import { startDistWatcher, stopDistWatcher } from './watch-dist';
+import getConfig from './handle-config';
+import { clearFSSyncDirectory, startFsSync, stopFsSync } from './sync';
+import { execPromise, stopChildProcesses } from './child-processes';
 
 /**
  * @param {string} containerName name of the Docker container to prepare the sidecar for
@@ -47,13 +47,19 @@ async function unregisterSidecar(containerName) {
  */
 async function startWatch(dir = '.', silent = true) {
     try {
-        await execPromise(`
+        await execPromise(
+            `
             cd ${join(process.cwd(), dir)} &&
             npm run watch
-        `, silent);
+        `,
+            silent
+        );
     } catch (e) {
         if (e.signal !== 'SIGINT') {
-            console.log('=== Watch has stopped ===', JSON.stringify(e, null, 2));
+            console.log(
+                '=== Watch has stopped ===',
+                JSON.stringify(e, null, 2)
+            );
         }
     }
 }
@@ -69,25 +75,25 @@ function isHelpRequested() {
  * Logs help message to the console
  */
 function logHelpMessage() {
-//     console.log(`
-// Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
-//
-//     "scripts": {
-//         ...
-//         "sync": "websight-localsync [option...]"
-//     }
-//
-// Options:
-//     target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project
-//     provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project
-//
-// Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.
-//     Run "npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources" or configure it as a script entry in package.json:
-//
-//     "scripts": {
-//         ...
-//         "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
-//     }`);
+    //     console.log(`
+    // Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
+    //
+    //     "scripts": {
+    //         ...
+    //         "sync": "websight-localsync [option...]"
+    //     }
+    //
+    // Options:
+    //     target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project
+    //     provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project
+    //
+    // Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.
+    //     Run "npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources" or configure it as a script entry in package.json:
+    //
+    //     "scripts": {
+    //         ...
+    //         "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
+    //     }`);
     // TODO: add help message
     console.log('=== Help message is not available yet. ===');
 }
@@ -118,7 +124,7 @@ async function main() {
     const config = getConfig();
 
     let handlingExit = false;
-    ['SIGINT'].forEach(event => {
+    ['SIGINT'].forEach((event) => {
         process.on(event, () => {
             if (!handlingExit) {
                 handlingExit = true;
@@ -137,7 +143,7 @@ async function main() {
             await registerSidecar(config.dockerContainerName);
 
             console.log('=== Starting code changes watch... ===');
-            config.modules.map(module => startWatch(module.source));
+            config.modules.map((module) => startWatch(module.source));
 
             startDistWatcher(config.modules);
         } else {
@@ -148,14 +154,16 @@ async function main() {
             await startFsSync(false);
 
             console.log('=== Starting code changes watch... ===');
-            await Promise.all(config.modules.map(module => startWatch(module.source, false)));
+            await Promise.all(
+                config.modules.map((module) => startWatch(module.source, false))
+            );
         }
     } catch (err) {
-        console.log('=== Error occurred during sync setup. Please check the logs above for more details. ===');
+        console.log(
+            '=== Error occurred during sync setup. Please check the logs above for more details. ==='
+        );
         await handleExit(config);
     }
 }
 
 main();
-
-

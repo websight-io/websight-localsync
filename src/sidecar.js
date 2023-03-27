@@ -1,7 +1,5 @@
-#!/usr/bin/env node
-
-import {setup} from './setup.js';
-import {startFsSync, stopFsSync} from "./sync.js";
+import setup from './setup';
+import { startFsSync, stopFsSync } from './sync';
 
 /**
  * Starts the sync with the WS instance within the current container.
@@ -32,7 +30,9 @@ async function handleStop() {
  * Logs the help message.
  */
 function logHelpMessage() {
-    console.log(`Usage: run with "start" or "stop" argument to start or stop the sync with WS instance.`);
+    console.log(
+        `Usage: run with "start" or "stop" argument to start or stop the sync with WS instance.`
+    );
 }
 
 /**
@@ -51,5 +51,3 @@ async function main() {
 }
 
 main();
-
-

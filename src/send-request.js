@@ -1,12 +1,12 @@
-import axios, {AxiosResponse} from 'axios';
-import { default as FormData } from 'form-data';
+import axios from 'axios';
+import FormData from 'form-data';
 
 /**
  * @param {string} method HTTP method of the request
  * @param {string} url URL of the request
  * @param {Object} formData form data to send with the request
  * @param {Object} headers additional headers to send with the request
- * @returns {Promise<AxiosResponse<any>>} promise that resolves with the response of the request
+ * @returns {Promise<any>} promise that resolves with the response of the request
  */
 async function sendRequest(method, url, formData, headers) {
     try {
@@ -15,27 +15,26 @@ async function sendRequest(method, url, formData, headers) {
             data: formData,
             method,
             headers: {
-                ...((formData != null && formData.getHeaders != null)
+                ...(formData != null && formData.getHeaders != null
                     ? formData.getHeaders()
                     : {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }),
-                ...headers
+                          'Content-Type': 'application/x-www-form-urlencoded',
+                      }),
+                ...headers,
             },
             auth: {
                 username: 'wsadmin',
-                password: 'wsadmin'
+                password: 'wsadmin',
             },
             validateStatus: (status) => status >= 200 && status <= 302,
-            maxRedirects: 0
+            maxRedirects: 0,
         });
     } catch (error) {
         if (error.response) {
             return error.response;
-        } else {
-            console.error('Could not connect to the server');
-            throw error;
         }
+        console.error('Could not connect to the server');
+        throw error;
     }
 }
 
