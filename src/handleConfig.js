@@ -15,7 +15,7 @@ const DEFAULT_DIST_PREFIX = 'target/dist/apps';
 const currentDir = process.cwd();
 
 function getModuleName(source) {
-    return source.includes('/') ? source.split('/').pop() : currentDir.split('/').pop();
+    return source?.includes('/') ? source.split('/').pop() : currentDir.split('/').pop();
 }
 
 function getModuleArgs(sourceValue, distValue, targetDirValue) {
@@ -113,4 +113,4 @@ export function getConfig() {
     }
 }
 
-// TODO test thoroughly
+// TODO test thoroughly (config file, args, etc. - config file in ds.pl - args overriding config file)

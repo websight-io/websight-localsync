@@ -5,7 +5,10 @@ import {exec} from 'child_process';
 import {setup} from './setup.js';
 import {startDistWatcher, stopDistWatcher} from "./watch-dist.js";
 import {getConfig} from "./handleConfig.js";
-import {startFsSync} from "./sync.js";
+import {clearFSSyncDirectory, startFsSync} from "./sync.js";
+
+// TODO add clear option - remove all synced resources from home directory
+// should we do it automatically when the script is started?
 
 const runningProcesses = [];
 
@@ -104,6 +107,7 @@ function handleExit(config) {
         stopFsSync();
     }
     stopChildProcesses();
+    clearFSSyncDirectory();
 }
 
 async function main() {
@@ -125,6 +129,7 @@ async function main() {
     });
 
     try {
+        clearFSSyncDirectory();
         if (config.docker) {
             console.log('=== Preparing environment for sidecar app... ===');
             await prepareSidecar(config.dockerContainerName);

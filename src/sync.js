@@ -1,5 +1,9 @@
 import {sendRequest} from "./sendRequest.js";
 import {stringify} from "qs";
+import {emptyDirSync} from "fs-extra";
+
+import { join } from 'path';
+import { homedir } from "os";
 
 let id = '';
 
@@ -40,4 +44,10 @@ export async function stopFsSync() {
     if (result != null) {
         console.log(`Deleted configuration with id: ${id} from FsResourceProvider`);
     }
+}
+
+export function clearFSSyncDirectory() {
+    console.log(`=== Clearing sync directory... ===`);
+    emptyDirSync(join(homedir(), '/.ws-localsync/content'));
+    console.log(`=== Cleared sync directory successfully ===`);
 }
