@@ -124,14 +124,13 @@ function logHelpMessage() {
  */
 async function handleExit(config) {
     if (config.docker) {
-        stopDistWatcher();
         await unregisterSidecar(config.dockerContainerName);
     } else {
         console.log('\n=== Stopping sync with WS instance... ===');
         await stopFsSync();
     }
+    stopDistWatcher();
     stopChildProcesses();
-    clearFSSyncDirectory();
 }
 
 async function main() {
