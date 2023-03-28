@@ -20,10 +20,11 @@ function execPromise(cmd, silent = false) {
             }
         });
         runningProcesses.push(childProcess);
-        const { stdout, stderr } = childProcess;
+        const { stdin, stdout, stderr } = childProcess;
         if (!silent) {
             stdout.pipe(process.stdout);
             stderr.pipe(process.stderr);
+            process.stdin.pipe(stdin);
         }
     });
 }

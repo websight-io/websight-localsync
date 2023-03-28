@@ -162,7 +162,7 @@ async function main() {
             await registerSidecar(config.dockerContainerName);
 
             console.log('=== Starting code changes watch... ===');
-            config.modules.map((module) => startWatch(module.source));
+            config.modules.forEach((module) => startWatch(module.source));
 
             startDistWatcher(config.modules);
         } else {
@@ -173,9 +173,11 @@ async function main() {
             await startFsSync(false);
 
             console.log('=== Starting code changes watch... ===');
-            await Promise.all(
-                config.modules.map((module) => startWatch(module.source, false))
+            config.modules.forEach((module) =>
+                startWatch(module.source, false)
             );
+
+            startDistWatcher(config.modules);
         }
     } catch (err) {
         console.log(

@@ -14,6 +14,11 @@ let id = '';
  * @returns {Promise<void>} promise that resolves when the FsResourceProvider is started
  */
 export async function startFsSync(isInDockerContainer = true) {
+    const sourceDir = isInDockerContainer
+        ? '/ws-localsync/content'
+        : join(homedir(), '/.ws-localsync/content');
+    console.log(`=== Starting FsResourceProvider for ${sourceDir} ===`);
+
     const result = await sendRequest(
         'post',
         'http://localhost:8080/system/console/configMgr/[Temporary%20PID%20replaced%20by%20real%20PID%20upon%20save]',
@@ -23,9 +28,7 @@ export async function startFsSync(isInDockerContainer = true) {
                 'org.apache.sling.fsprovider.internal.FsResourceProvider',
             action: 'ajaxConfigManager',
             $location: '',
-            'provider.file': isInDockerContainer
-                ? '/ws-localsync/content'
-                : '~/.ws-localsync/content',
+            'provider.file': sourceDir,
             'provider.root': '/dev/apps',
             'provider.fs.mode': 'FILES_FOLDERS',
             'provider.initial.content.import.options': '',
