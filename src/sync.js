@@ -17,7 +17,7 @@ const findAllCDataBlocks = (str) => {
 };
 
 /**
- * Gets the id of the FsResourceProvider to the corresponding variable
+ * Gets the id of the FsResourceProviders
  *
  * @returns {Promise<Array<string>>}
  */
@@ -49,10 +49,11 @@ const getFsResourceProviderId = async () => {
         )[0];
 
     if (configData != null) {
-        const fsResourceProviderPids = configData.pids.filter((pid) =>
-            pid.id.startsWith(
-                'org.apache.sling.fsprovider.internal.FsResourceProvider'
-            )
+        const fsResourceProviderPids = configData.pids.filter(
+            (pid) =>
+                pid.id?.startsWith(
+                    'org.apache.sling.fsprovider.internal.FsResourceProvider'
+                ) && pid.nameHint?.includes('/dev/apps')
         );
 
         return fsResourceProviderPids.map((pid) => pid.id.split('.').pop());
