@@ -256,16 +256,6 @@ In some example project you want to use for testing:
   }
   ```
 
-## How to publish
-
-To publish a new package version modify `version` in `package.json` and run `npm publish`.
-You need to be logged in to company's npm account. To log in use `npm login`. 
-Credentials to https://www.npmjs.com/~dynamicsolutions:
-- Username: dynamicsolutions
-- password: reach @Michal Cukierman, (`forgot password` option in https://www.npmjs.com can be used)
-- email: admin@ds.pl
-- One Time Password: reach @Michal Cukierman
-
 ## Troubleshooting
 
 ### The dev files are not synchronised
