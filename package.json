@@ -1,6 +1,6 @@
 {
   "name": "websight-localsync",
-  "version": "2.0.0-SNAPSHOT",
+  "version": "2.0.0-SNAPSHOT.9",
   "description": "",
   "type": "module",
   "main": "dist/index.js",

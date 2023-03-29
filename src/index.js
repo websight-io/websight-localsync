@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 import setup from './setup';
 import { startDistWatcher, stopDistWatcher } from './watch-dist';
@@ -11,13 +12,20 @@ import getConfig, {
 import { clearFSSyncDirectory, startFsSync, stopFsSync } from './sync';
 import { execPromise, stopChildProcesses } from './child-processes';
 
+// eslint-disable-next-line no-underscore-dangle
+const __filename = fileURLToPath(import.meta.url);
+
+// eslint-disable-next-line no-underscore-dangle
+const __dirname = dirname(__filename);
+const getScriptsDir = () => join(__dirname, 'scripts');
+
 /**
  * @param {string} containerName name of the Docker container to prepare the sidecar for
  * @returns {Promise<void>} promise that resolves when the sidecar is prepared
  */
 async function prepareSidecar(containerName) {
     await execPromise(`
-        cd ./node_modules/websight-localsync/dist/scripts
+        cd ${getScriptsDir()}
         bash ./prepare-sidecar.sh -c ${containerName}
     `);
 }
@@ -28,7 +36,7 @@ async function prepareSidecar(containerName) {
  */
 async function registerSidecar(containerName) {
     await execPromise(`
-        cd ./node_modules/websight-localsync/dist/scripts
+        cd ${getScriptsDir()}
         bash ./register-sidecar.sh -c ${containerName}
     `);
 }
@@ -39,7 +47,7 @@ async function registerSidecar(containerName) {
  */
 async function unregisterSidecar(containerName) {
     await execPromise(`
-        cd ./node_modules/websight-localsync/dist/scripts
+        cd ${getScriptsDir()}
         bash ./unregister-sidecar.sh -c ${containerName}
     `);
 }
@@ -60,10 +68,7 @@ async function startWatch(dir = '.', silent = true) {
         );
     } catch (e) {
         if (e.signal !== 'SIGINT') {
-            console.log(
-                '=== Watch has stopped ===',
-                JSON.stringify(e, null, 2)
-            );
+            console.log('=== Watch has stopped ===', e);
         }
     }
 }
