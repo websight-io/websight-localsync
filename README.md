@@ -12,6 +12,22 @@ Example full integration: https://bitbucket.org/teamds-workspace/www.ds.pl-websi
 ## Using with different CMS setup types
 
 ### Single module, CMS running as a Docker container
+Add `websight-localsync` to your project's `package.json` as a dev dependency:
+```bash
+npm install --save-dev websight-localsync
+# or
+yarn add --dev websight-localsync
+```
+
+Add a script called `watch` to your project's `package.json`:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
+
 If you're running your CMS as a Docker container you need to mount a new volume to the container with the following configuration:
 ```yaml
 volumes:
@@ -51,6 +67,21 @@ If your build process uses a different folder than `target/dist` you can specify
 ```
 
 ### Single module, CMS running on localhost (using jar file)
+Add `websight-localsync` to your project's `package.json` as a dev dependency:
+```bash
+npm install --save-dev websight-localsync
+# or
+yarn add --dev websight-localsync
+```
+
+Add a script called `watch` to your project's `package.json`:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
 
 #### Using command line arguments (Recommended)
 ```bash
@@ -80,7 +111,20 @@ If your build process uses a different folder than `target/dist` you can specify
 }
 ```
 
+Start sync simply with the following command:
+```bash
+websight-localsync
+```
+
 ### Multiple modules, CMS running as a Docker container
+Add a script called `watch` to all your modules' `package.json` files:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
 
 #### Using config file
 If you're running your CMS as a Docker container you need to mount a new volume to the container with the following configuration:
@@ -108,10 +152,23 @@ Create a file in the current directory called `.ws-localsync.json` with the foll
 }
 ```
 
+Start sync simply with the following command:
+```bash
+npx websight-localsync
+```
+
 #### Using command line arguments
 Multiple modules are not supported in case of multiple modules. Please describe your modules in the config file.
 
 ### Multiple modules, CMS running on localhost (using jar file)
+Add a script called `watch` to all your modules' `package.json` files:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
 
 #### Using config file
 Create a file in the current directory called `.ws-localsync.json` with the following content:
@@ -131,6 +188,11 @@ Create a file in the current directory called `.ws-localsync.json` with the foll
     }
   ]
 }
+```
+
+Start sync simply with the following command:
+```bash
+npx websight-localsync
 ```
 
 #### Using command line arguments
