@@ -136,6 +136,7 @@ async function handleExit(config) {
     }
     stopDistWatcher();
     stopChildProcesses();
+    clearFSSyncDirectory();
 }
 
 async function main() {
