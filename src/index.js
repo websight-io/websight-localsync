@@ -1,110 +1,142 @@
 #!/usr/bin/env node
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const { exec } = require('child_process');
-const qs = require('qs');
+import setup from './setup';
+import { startDistWatcher, stopDistWatcher } from './watch-dist';
+import getConfig, {
+    DEFAULT_CONTAINER_NAME,
+    DEFAULT_DIST_PREFIX,
+    DEFAULT_SOURCE,
+} from './handle-config';
+import { clearFSSyncDirectory, startFsSync, stopFsSync } from './sync';
+import { execPromise, stopChildProcesses } from './child-processes';
 
-const projectDir = process.cwd();
-const projectName = projectDir.split('/').pop();
-const defaultDistDirPrefix = 'target/dist/apps';
-const defaultDistDir = `${projectDir}/${defaultDistDirPrefix}/${projectName}`;
-const providerRootPrefix = '/dev/apps/';
-const defaultProviderRootSuffix = projectName;
-const { setup } = require('./setup.js');
-const { sendRequest, toFormData } = require('./sendRequest.js');
+// eslint-disable-next-line no-underscore-dangle
+const __filename = fileURLToPath(import.meta.url);
 
-let id = '';
+// eslint-disable-next-line no-underscore-dangle
+const __dirname = dirname(__filename);
+const getScriptsDir = () => join(__dirname, 'scripts');
 
-async function startFsSync() {
-    const { distDir, providerRootSuffix } = handleArguments();
+/**
+ * @param {string} containerName name of the Docker container to prepare the sidecar for
+ * @returns {Promise<void>} promise that resolves when the sidecar is prepared
+ */
+async function prepareSidecar(containerName) {
+    await execPromise(`
+        cd ${getScriptsDir()}
+        bash ./prepare-sidecar.sh -c ${containerName}
+    `);
+}
 
-    const result = await sendRequest(
-        'post',
-        'http://localhost:8080/system/console/configMgr/[Temporary%20PID%20replaced%20by%20real%20PID%20upon%20save]',
-        qs.stringify({
-            apply: 'true',
-            factoryPid: 'org.apache.sling.fsprovider.internal.FsResourceProvider',
-            action: 'ajaxConfigManager',
-            '$location': '',
-            'provider.file': distDir,
-            'provider.root': `${providerRootPrefix}${providerRootSuffix}`,
-            'provider.fs.mode': 'FILES_FOLDERS',
-            'provider.initial.content.import.options': '',
-            'provider.filevault.filterxml.path': '',
-            'provider.checkinterval': '1000',
-            'provider.cache.size': '10000',
-            'propertylist': 'provider.file,provider.root,provider.fs.mode,provider.initial.content.import.options,provider.filevault.filterxml.path,provider.checkinterval,provider.cache.size'
-        })
-    );
-    if (result != null) {
-        id = result.headers['location'].split('.').pop();
-        console.log(`Added configuration with id: ${id} to FsResourceProvider`);
+/**
+ * @param {string} containerName name of the Docker container to register the sidecar for
+ * @returns {Promise<void>} promise that resolves when the sidecar is registered
+ */
+async function registerSidecar(containerName) {
+    await execPromise(`
+        cd ${getScriptsDir()}
+        bash ./register-sidecar.sh -c ${containerName}
+    `);
+}
+
+/**
+ * @param {string} containerName name of the Docker container to unregister the sidecar from
+ * @returns {Promise<void>} promise that resolves when the sidecar is unregistered
+ */
+async function unregisterSidecar(containerName) {
+    await execPromise(`
+        cd ${getScriptsDir()}
+        bash ./unregister-sidecar.sh -c ${containerName}
+    `);
+}
+
+/**
+ * @param {string} dir directory to start the file change watcher script in
+ * @param {boolean} silent whether to suppress the output of the script
+ * @returns {Promise<void>} promise that resolves when the watcher script is stopped
+ */
+async function startWatch(dir = '.', silent = true) {
+    try {
+        await execPromise(
+            `
+            cd ${join(process.cwd(), dir)} &&
+            npm run watch
+        `,
+            silent
+        );
+    } catch (e) {
+        if (e.signal !== 'SIGINT') {
+            console.log('=== Watch has stopped ===', e);
+        }
     }
 }
 
-async function stopFsSync() {
-    const result = await sendRequest(
-        'post',
-        `http://localhost:8080/system/console/configMgr/org.apache.sling.fsprovider.internal.FsResourceProvider.${id}`,
-        qs.stringify({
-            apply: 'true',
-            delete: 'true'
-        })
-    );
-    if (result != null) {
-        console.log(`Deleted configuration with id: ${id} from FsResourceProvider`);
-    }
-}
-
-function startWatch() {
-    const watch = exec('npm run watch');
-    watch.stdout.pipe(process.stdout);
-    watch.stderr.pipe(process.stderr);
-}
-
-function handleArguments() {
-    let distDir = defaultDistDir;
-    let providerRootSuffix = defaultProviderRootSuffix;
-    process.argv.forEach((val) => {
-        if(val.startsWith('target-folder')) {
-            const targetFolderFromArgs = val.split('=')[1];
-            if (targetFolderFromArgs != null) {
-                distDir = `${projectDir}/${targetFolderFromArgs}`;
-            }
-        }
-        if(val.startsWith('provider-root-suffix')) {
-            const suffixFromArgs = val.split('=')[1];
-            if (suffixFromArgs != null) {
-                providerRootSuffix = suffixFromArgs;
-            }
-        }
-    });
-    return { distDir, providerRootSuffix };
-}
-
+/**
+ * @returns {boolean} true if the --help argument was passed to the script
+ */
 function isHelpRequested() {
     return process.argv.includes('--help');
 }
 
+/**
+ * Logs help message to the console
+ */
 function logHelpMessage() {
     console.log(`
-Usage: run "npx websight-localsync [option...]" or configure it as a script entry in package.json:
-    
+    Usage: run "npx websight-localsync [options]" or configure it as a script entry in package.json:
+
     "scripts": {
         ...
-        "sync": "websight-localsync [option...]"
+        "sync": "websight-localsync [options]"
     }
     
-Options:
-    target-folder: folder where the resources that we want to sync can be found. Default: ${defaultDistDirPrefix}/ + the name of the project
-    provider-root-suffix: the path under ${providerRootPrefix} where the synced resources will be copied. Default: the name of the project
+    Options take precedence over the config file.
+
+    Options:
+        --no-docker: CMS is not running in a Docker container (Default: true)
+        --container-name: name of the Docker container where the CMS is running (Default: "${DEFAULT_CONTAINER_NAME}")
+        --source: path to the source directory of the module/project to sync (Default: "${DEFAULT_SOURCE}")
+        --dist: path to the dist directory of the module/project to sync (under the "source" directory) (Default: "${DEFAULT_DIST_PREFIX}")
+        --target-dir: path to the directory where the synced files should be provided (Default: derived from the "source" directory's path's last part, e.g. dspl-website)
     
-Example: our resources can be found under dist folder and inside the JCR repository we want to see them under /dev/apps/my-site/web_resources.
-    Run "npx websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources" or configure it as a script entry in package.json:
-    
-    "scripts": {
-        ...
-        "sync": "websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources"
-    }`);
+    Config file:
+        You can also create a ".ws-localsync.json" file in the root directory of your project to configure the sync.
+        To sync multiple modules at ones, it's necessary to create a config file.
+        The file should contain a JSON object with the following properties:
+        {
+            "docker": boolean, // default: true
+            "dockerContainerName": string, // default: "${DEFAULT_CONTAINER_NAME}"
+            "modules": [
+                {
+                    "source": string, // default: "${DEFAULT_SOURCE}",
+                    "dist": string, // default: "${DEFAULT_DIST_PREFIX}",
+                    "targetDir": string // default: derived from the "source" directory's path's last part, e.g. dspl-website
+                },
+                {
+                    //...
+                }
+            ]
+        }
+    `);
+}
+
+/**
+ * Tears down the environment when the script is stopped
+ *
+ * @param {Config} config configuration object
+ */
+async function handleExit(config) {
+    if (config.docker) {
+        await unregisterSidecar(config.dockerContainerName);
+    } else {
+        console.log('\n=== Stopping sync with WS instance... ===');
+        await stopFsSync();
+    }
+    stopDistWatcher();
+    stopChildProcesses();
+    clearFSSyncDirectory();
 }
 
 async function main() {
@@ -113,29 +145,51 @@ async function main() {
         return;
     }
 
+    const config = getConfig();
+
     let handlingExit = false;
-    ['SIGINT'].forEach(event => {
+    ['SIGINT'].forEach((event) => {
         process.on(event, () => {
             if (!handlingExit) {
                 handlingExit = true;
-                console.log('\n=== Stopping sync with WS instance... ===');
-                stopFsSync();
+                handleExit(config);
             }
         });
     });
 
-    console.log('=== Setting up the the server... ===');
-    await setup();
+    try {
+        clearFSSyncDirectory();
+        if (config.docker) {
+            console.log('=== Preparing environment for sidecar app... ===');
+            await prepareSidecar(config.dockerContainerName);
 
-    handleArguments();
+            console.log('=== Registering sidecar app in CMS container... ===');
+            await registerSidecar(config.dockerContainerName);
 
-    console.log('=== Starting sync with WS instance... ===');
-    await startFsSync();
+            console.log('=== Starting code changes watch... ===');
+            config.modules.forEach((module) => startWatch(module.source));
 
-    console.log('=== Starting code changes watch... ===');
-    await startWatch();
+            startDistWatcher(config.modules);
+        } else {
+            console.log('=== Setting up the the server... ===');
+            await setup();
+
+            console.log('=== Starting sync with WS instance... ===');
+            await startFsSync(false);
+
+            console.log('=== Starting code changes watch... ===');
+            config.modules.forEach((module) =>
+                startWatch(module.source, false)
+            );
+
+            startDistWatcher(config.modules);
+        }
+    } catch (err) {
+        console.log(
+            '=== Error occurred during sync setup. Please check the logs above for more details. ==='
+        );
+        await handleExit(config);
+    }
 }
 
 main();
-
-

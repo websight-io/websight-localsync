@@ -7,97 +7,243 @@ Example full integration: https://bitbucket.org/teamds-workspace/www.ds.pl-websi
 
 ## Requirements
 
-- Node 16.x (the active LTS)
+- Node 18.x (the active LTS)
 
-## How to use
-Configure the project you are actively working on:
+## Using with different CMS setup types
 
-- install `websight-localsync` as module dev dependency:
-  - use the latest [released version](https://www.npmjs.com/package/websight-localsync):
-    ```bash
-    npm install websight-localsync --save-dev
-    ```
-- add `watch` script entry in `package.json` e.g.:
-  ```yaml
+### Single module, CMS running as a Docker container
+Add `websight-localsync` to your project's `package.json` as a dev dependency:
+```bash
+npm install --save-dev websight-localsync
+# or
+yarn add --dev websight-localsync
+```
+
+Add a script called `watch` to your project's `package.json`:
+```json
+{
   "scripts": {
-    ...
-    "watch": "babel src/main/webapp/ --config-file ./babel/.babelrc.js --extensions \".js,.jsx,.ts,.tsx\" -d target/dist --copy-files --watch"
+    "watch": "<your-watch-script, e.g. babel>"
   }
-  ```
-- run script either using `npx websight-localsync [option...]` or configure it as a `script` entry in `package.json`:
-  ```yaml
+}
+```
+
+If you're running your CMS as a Docker container you need to mount a new volume to the container with the following configuration:
+```yaml
+volumes:
+  - ~/.ws-localsync:/ws-localsync
+```
+
+#### Using command line arguments (Recommended)
+```bash
+websight-localsync --container-name <container-name>
+```
+
+If your build process uses a different folder than `target/dist` you can specify the details the following way:
+```bash
+websight-localsync --container-name <container-name> --source <source> --dist <dist> --target-dir <target-dir>
+```
+
+#### Using config file
+Create a file in the current directory called `.ws-localsync.json` with the following content:
+```json
+{
+  "containerName": "<container-name>"
+}
+```
+
+If your build process uses a different folder than `target/dist` you can specify the details the following way:
+```json
+{
+  "containerName": "<container-name>",
+  "modules": [
+    {
+      "source": "<source>",
+      "dist": "<dist>",
+      "targetDir": "<target-dir>"
+    }
+  ]
+}
+```
+
+### Single module, CMS running on localhost (using jar file)
+Add `websight-localsync` to your project's `package.json` as a dev dependency:
+```bash
+npm install --save-dev websight-localsync
+# or
+yarn add --dev websight-localsync
+```
+
+Add a script called `watch` to your project's `package.json`:
+```json
+{
   "scripts": {
-    ...
-    "sync": "websight-localsync [option...]"
+    "watch": "<your-watch-script, e.g. babel>"
   }
-  ```
-  - Options:
-    - **target-folder**: folder where the resources that we want to sync can be found. *Default*: `${defaultDistDirPrefix}/ + the name of the project`
-    - **provider-root-suffix**: the path under ${providerRootPrefix} where the synced resources will be copied. *Default*: `the name of the project`
-  - Example: `websight-localsync target-folder=dist provider-root-suffix=my-site/web_resources`
-  
-### Using with docker
-The tool is working with filesystem so we need to make sure the files of the project you're working on are available inside of the Docker container.
-  - configure an additional volume pointing your `projects` root folder using the local driver by adding:
-    ```yaml
-    volumes:
-      ...
-      localsync:
-        driver: local
-        driver_opts:
-          o: bind
-          device: ${PWD}/../../../
-          type: none
-    ```
-  - point the new volume in the ICE container
-    ```yaml
-    services:
-      ice:
-        ...
-        volumes:
-          ...
-          - localsync:${PWD}/../../../:ro 
-    ```
-- bind your `projects` root folder into Docker containers (`Docker Desktop` -> `Preferences` -> `File Sharing` -> add the new entry)
+}
+```
+
+#### Using command line arguments (Recommended)
+```bash
+websight-localsync --no-docker
+```
+
+If your build process uses a different folder than `target/dist` you can specify the details the following way:
+```bash
+websight-localsync --no-docker --source <source> --dist <dist> --target-dir <target-dir>
+```
+
+#### Using config file
+Create a file in the current directory called `.ws-localsync.json` with the following content:
+```json
+{
+  "docker": false
+}
+```
+
+If your build process uses a different folder than `target/dist` you can specify the details the following way:
+```json
+{
+  "docker": false,
+  "source": "<source>",
+  "dist": "<dist>",
+  "targetDir": "<target-dir>"
+}
+```
+
+Start sync simply with the following command:
+```bash
+websight-localsync
+```
+
+### Multiple modules, CMS running as a Docker container
+Add a script called `watch` to all your modules' `package.json` files:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
+
+#### Using config file
+If you're running your CMS as a Docker container you need to mount a new volume to the container with the following configuration:
+```yaml
+volumes:
+  - ~/.ws-localsync:/ws-localsync
+```
+
+Create a file in the current directory called `.ws-localsync.json` with the following content:
+```json
+{
+  "containerName": "<container-name>",
+  "modules": [
+    {
+      "source": "<source-1>",
+      "dist": "<dist-1>",
+      "targetDir": "<target-dir-1>"
+    },
+    {
+      "source": "<source-2>",
+      "dist": "<dist-2>",
+      "targetDir": "<target-dir-2>"
+    }
+  ]
+}
+```
+
+Start sync simply with the following command:
+```bash
+npx websight-localsync
+```
+
+#### Using command line arguments
+Multiple modules are not supported in case of multiple modules. Please describe your modules in the config file.
+
+### Multiple modules, CMS running on localhost (using jar file)
+Add a script called `watch` to all your modules' `package.json` files:
+```json
+{
+  "scripts": {
+    "watch": "<your-watch-script, e.g. babel>"
+  }
+}
+```
+
+#### Using config file
+Create a file in the current directory called `.ws-localsync.json` with the following content:
+```json
+{
+  "docker": false,
+  "modules": [
+    {
+      "source": "<source-1>",
+      "dist": "<dist-1>",
+      "targetDir": "<target-dir-1>"
+    },
+    {
+      "source": "<source-2>",
+      "dist": "<dist-2>",
+      "targetDir": "<target-dir-2>"
+    }
+  ]
+}
+```
+
+Start sync simply with the following command:
+```bash
+npx websight-localsync
+```
+
+#### Using command line arguments
+Multiple modules are not supported in case of multiple modules. Please describe your modules in the config file.
 
 ## How it works
 
-Once we run `npx websight-localsync`
+### File sync
+The sync mechanism depends on [Apache Sling File System Resource Provider](https://github.com/apache/sling-org-apache-sling-fsresource).
+It allows to mount a local folder as a resource provider in the WebSight instance. In Docker setup, the folder is mounted as a volume to `/ws-localsync`,
+otherwise the folder `~/.ws-localsync` is used directly for synchronization.
+Project file changes need to be handled on the project level, `localsync` uses the project's `watch` script to start building the project.
+The `watch` script is responsible for keeping the `dist` directory up to date with the latest changes, `localsync` will then copy the contents
+of the `dist` directory to common one (which is the one mounted as volume in case of Docker).
 
-```bash
-npx websight-localsync                                                                                                              ✔ ╱ 15:25:56
-=== Setting up the the server... ===
-Detected FsResourceProvider.
-Added mapping
-=== Starting sync with WS instance... ===
-Added configuration with id: http://localhost:8080/system/console/configMgr/[Temporary PID replaced by real PID upon save] to FsResourceProvider
-=== Starting code changes watch... ===
+### Support for Docker
+The tool supports both Docker and non-Docker setups. In case of Docker, the tool requires additional setup when running the container to mount a volume.
+This is because of the way FSResource Provider works, it requires direct file system access to the folder to be used as a resource provider.
 
-> watch
-> babel src/main/webapp/ --config-file ./babel/.babelrc.js --extensions ".js,.jsx,.ts,.tsx" -d target/dist --copy-files --watch
+### Multiple modules
+Multiple modules are supported by started the `watch` script for each module. Then `localsync`'s file watcher will
+copy the contents of the `dist` directories to `~/.ws-localsync` according to the directory structure of the modules.
 
-Successfully compiled 33 files with Babel.
+## Command line options
+The following command line options are available when running the tool: 
+* `--no-docker`: CMS is not running in a Docker container (Default: true)
+* `--container-name`: name of the Docker container where the CMS is running (Default: "local-compose-cms-1")
+* `--source`: path to the source directory of the module/project to sync (Default: ".")
+* `--dist`: path to the dist directory of the module/project to sync (under the "source" directory) (Default: "target/dist/apps")
+* `--target-dir`: path to the directory where the synced files should be provided (Default: derived from the "source" directory's path's last part, e.g. dspl-website)
+
+These options take precedence over the ones specified in the config file.
+
+## Configuration file
+The following options can be specified in the `.ws-localsync.json` file:
+```json
+{
+    "docker": true,
+    "dockerContainerName": "local-compose-cms-1",
+    "modules": [
+        {
+            "source": ".",
+            "dist": "target/dist/apps",
+            "targetDir": "<project-name>"
+        },
+        {
+            //...
+        }
+    ]
+}
 ```
-
-it connects to `localhost:8080` and add the `Apache Sling File System Resource Provider` configuration to map the JCR path (under `/dev/{PROJECT_NAME}`) 
-to the local filesystem (basically `target/dist`).
-
-In [localhost:8080/system/console/configMgr](http://localhost:8080/system/console/configMgr) you can check the configuration:
-
-![OSGI Configuration Manager](./docs/images/configMgr-fsresource.png)
-
-and check details
-
-![Apache Sling File System Resource Provider configuration](./docs/images/configMgr-fsresource-config.png)
-
-It also configures the environment (using JCR resource mapping) in a way that it first resolves `/dev` before `/apps`.
-
-### How to build
-Run commands
-```bash
-npm install
-```
-to build the app.
 
 ### How to test during development
 In some example project you want to use for testing:
@@ -109,17 +255,6 @@ In some example project you want to use for testing:
     }
   }
   ```
-
-
-## How to publish
-
-To publish a new package version modify `version` in `package.json` and run `npm publish`.
-You need to be logged in to company's npm account. To log in use `npm login`. 
-Credentials to https://www.npmjs.com/~dynamicsolutions:
-- Username: dynamicsolutions
-- password: reach @Michal Cukierman, (`forgot password` option in https://www.npmjs.com can be used)
-- email: admin@ds.pl
-- One Time Password: reach @Michal Cukierman
 
 ## Troubleshooting
 
