@@ -1,9 +1,6 @@
 ## Description
 
-A tool to seamlessly synchronize local code changes with your WebSight instance.
-
-Demonstration video: https://drive.google.com/file/d/1wMU8_q2_rUOEN-9_g27QxNhg_4En09AS/view?usp=sharing
-Example full integration: https://bitbucket.org/teamds-workspace/www.ds.pl-websight/pull-requests/30
+A tool to seamlessly synchronize local code changes with your [WebSight CMS](https://websight.io) instance.
 
 ## Requirements
 
