@@ -17,11 +17,12 @@ jobs:
     needs:
       - build
     steps:
-#      - name: Restore cached dist directory
-#        uses: actions/cache/restore@v3
-#        with:
-#          path: dist
-#          key: ${{ runner.os }}-dist-${{ github.sha }}
+      - name: Restore cached dist directory
+        uses: actions/cache/restore@v3
+        with:
+          path: ./dist/**
+          key: ${{ runner.os }}-dist-${{ github.sha }}
+          fail-on-cache-miss: true
       - name: Publish next snapshot
         run: sh ./publish-next-snapshot.sh
       - name: Push changes to main branch
