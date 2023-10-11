@@ -1,6 +1,7 @@
 name: Release SNAPSHOT version
 
 on:
+  workflow_call:
   push:
     branches:
       - master
