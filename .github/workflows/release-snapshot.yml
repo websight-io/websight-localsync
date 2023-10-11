@@ -1,7 +1,7 @@
 name: Release SNAPSHOT version
 
 on:
-  workflow_call:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -25,6 +25,9 @@ jobs:
           path: ./dist/**
           key: ${{ runner.os }}-dist-${{ github.sha }}
           fail-on-cache-miss: true
+      - uses: actions/checkout@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish next snapshot
         run: sh ./publish-next-snapshot.sh
       - name: Push changes to main branch
