@@ -6,7 +6,8 @@ on:
 jobs:
   build:
     name: Build project
-    uses: websight-io/websight-localsync/.github/workflows/pr-check.yml@main
+    uses: ./.github/workflows/pr-check.yml
+    secrets: inherit
   publish:
     name: Remove SNAPSHOT version
     runs-on: ubuntu-latest
